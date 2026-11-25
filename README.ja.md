@@ -21,6 +21,8 @@ Claude が ` ```mermaid ` のコードブロックを書くと、その場所に
 - **Windows で使える**
   - フォントを Windows のフォントフォルダー（`~\AppData\Local\Microsoft\Windows\Fonts`・`%WINDIR%\Fonts`）からも探します。
     元は macOS と Linux のフォルダーしか探しませんでした。
+  - `font` が `auto` のときは、ラベルを Segoe UI で描き、CJK の文字は Yu Gothic・Malgun Gothic・Microsoft YaHei で描きます。
+    元は Windows に既定のフォントが無く、ラベルが描かれませんでした。
   - `HOME` の無い Windows では、`USERPROFILE` をホームとして使います。
 - **WSL の Claude Code を Windows のターミナルで使っても描ける**：図の PNG を、ファイルのパスではなくデータで渡します。
   元はパスで渡していたので、Windows のターミナルが WSL のファイルを開けず、空の枠になっていました。
@@ -101,9 +103,6 @@ mod が自分で自分を更新することはありません。
 
   どちらも、画像を出せないターミナル（Windows Terminal など）で付けると、図が空の枠になります。
   gooztty のときだけ付くよう、PowerShell のプロファイルなどで `$Env:TERM_PROGRAM -eq 'gooztty'` を見て設定してください。
-- **フォント**：Windows では、`font` が `auto` のままだと既定のフォントが見つかりません。
-  インストール済みのフォントの名前（例：`BIZ UDPGothic`・`Yu Gothic UI`）を `font` に書いてください。
-  日本語のラベルには、日本語の字形を持つフォントが要ります。
 - **WSL**：WSL の Claude Code を gooztty で使うときは、Windows の環境変数 `TERM_PROGRAM` が WSL に渡るよう、`WSLENV` に `TERM_PROGRAM/u` を足してください。
   Linux では、日本語のラベルのために `fonts-noto-cjk` などを入れてください。
 
@@ -159,7 +158,7 @@ beautiful-mermaid のテーマを選ぶと、そのテーマの背景の上に�
 | `theme` | `auto` | `auto` か、`zinc-light`・`zinc-dark`・`tokyo-night`・`tokyo-night-storm`・`tokyo-night-light`・`catppuccin-mocha`・`catppuccin-latte`・`nord`・`nord-light`・`dracula`・`github-light`・`github-dark`・`solarized-light`・`solarized-dark`・`one-dark` のどれかです。 |
 | `colors` | なし | テーマより優先する色を、`キー=#rrggbb` の組を空白で区切って書きます。キーは `bg`（背景）・`fg`（文字）・`line`（線）・`accent`（矢印の先・強調・グラフの系列）・`muted`（補助の文字）・`surface`（箱の塗り）・`border`（箱の枠）です。例：`accent=#7aa2f7 line=#5c6370` |
 | `box_colors` | `true` | 箱ごとに、テーマの配色から違う色の枠と薄い塗りを付けます。タイムラインは時期ごと、マインドマップは中心から出た枝ごとに1色です。`false` にすると、テーマの1色になります。図の中で `style` を書いた箱は、その色のままです。 |
-| `font` | `auto` | ラベルのフォントです。`auto` は、macOS では Helvetica Neue、Linux では DejaVu Sans・Noto Sans・Liberation Sans です。またはインストール済みのフォントの名前を書きます。ハングルなどの CJK の文字は、その文字を持つシステムのフォントで描きます。 |
+| `font` | `auto` | ラベルのフォントです。`auto` は、macOS では Helvetica Neue、Linux では DejaVu Sans・Noto Sans・Liberation Sans、Windows では Segoe UI です。またはインストール済みのフォントの名前を書きます。ハングルなどの CJK の文字は、その文字を持つシステムのフォントで描きます。フォントに無い文字を含むラベルは、ラベル全体をその代わりのフォントで描きます。 |
 | `text_scale` | `1` | ターミナルの文字に対するラベルの大きさです。 |
 | `node_path` | `node` | 描画に使う Node.js の実行ファイルです。 |
 | `font_metrics` | `auto` | `auto` は、セッションの開始時にターミナルのフォントを測ります（下の節）。`manual` は、次の2つの値をいつも使います。 |
