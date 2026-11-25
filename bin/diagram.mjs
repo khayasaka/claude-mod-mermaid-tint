@@ -17,8 +17,11 @@ import path from 'node:path'
 
 import { THEMES, parseMermaid, renderMermaidASCII, renderMermaidSVG } from 'beautiful-mermaid'
 
+import { colorBoxes } from './box-colors.mjs'
 import { resolveCss } from './css.mjs'
 import { pickFonts } from './fonts.mjs'
+import { fixMarkerOrient } from './markers.mjs'
+import { straightenEdges } from './straighten-edges.mjs'
 
 const require = createRequire(import.meta.url)
 const { Resvg } = require('@resvg/resvg-js')
@@ -184,13 +187,17 @@ export function withMath(source, math = []) {
 }
 
 export function renderPicture(item, request) {
-  const { colors, card } = diagramColors(request)
+  const { colors, card, theme } = diagramColors(request)
   const source = withMath(item.source, item.math)
-  const raw = renderMermaidSVG(source, {
+  const drawn = renderMermaidSVG(source, {
     ...Object.fromEntries(COLOR_KEYS.filter(key => colors[key]).map(key => [key, colors[key]])),
     transparent: true,
     padding: card ? CARD_PADDING : PADDING,
   })
+  // Turn arrow heads so resvg can read them, remove small steps in edges, and give each box its own color.
+  // With box_colors set to false, boxes keep beautiful-mermaid's colors
+  const straight = straightenEdges(fixMarkerOrient(drawn))
+  const raw = request.boxColors === false ? straight : colorBoxes(straight, { theme, light: isLight(colors.bg) })
   const viewBox = /viewBox="([^"]+)"/.exec(raw)
   const [, , width, height] = (viewBox?.[1] ?? '0 0 0 0').split(/\s+/).map(Number)
   if (!(width > 0 && height > 0)) throw new Error('nothing to draw')

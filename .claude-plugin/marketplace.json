@@ -1,15 +1,15 @@
 {
-  "name": "mermaid-inline",
-  "description": "Mermaid Inline: draw the Mermaid diagrams in Claude Code replies, as pictures in Ghostty, cmux and kitty and as Unicode box drawing in other terminals",
+  "name": "claude-mod-mermaid-tint",
+  "description": "Mermaid Tint: draw the Mermaid diagrams in Claude Code replies, with a color for each box, as pictures in Ghostty, cmux, kitty and gooztty and as Unicode box drawing in other terminals",
   "owner": {
-    "name": "dazebug",
-    "url": "https://github.com/dazebug"
+    "name": "khayasaka",
+    "url": "https://github.com/khayasaka"
   },
   "plugins": [
     {
-      "name": "mermaid-inline",
+      "name": "mermaid-tint",
       "source": "./",
-      "description": "Draws the Mermaid diagrams in Claude's replies: as pictures in Ghostty, cmux and kitty, and as Unicode box drawing in other terminals"
+      "description": "Draws the Mermaid diagrams in Claude's replies, with a color for each box: as pictures in Ghostty, cmux, kitty and gooztty (Windows), and as Unicode box drawing in other terminals"
     }
   ]
 }

@@ -5,7 +5,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { test } from 'node:test'
 
-import { findFontFile, ghosttyCell, parseGhosttyConfig, readFontMetrics } from '../bin/font-metrics.mjs'
+import { findFontFile, fontDirs, ghosttyCell, parseGhosttyConfig, readFontMetrics } from '../bin/font-metrics.mjs'
 
 const FIRA_CODE = { unitsPerEm: 1950, ascent: 1800, descent: -600, lineGap: 0, maxAsciiAdvance: 1200 }
 const JETBRAINS_MONO = { unitsPerEm: 1000, ascent: 1020, descent: -300, lineGap: 0, maxAsciiAdvance: 600 }
@@ -39,4 +39,15 @@ test('a font file yields the metrics Ghostty reads', { skip: firaFile === undefi
 test('a family name finds its regular face among the font folders', { skip: firaFile === undefined && 'Fira Code is not installed' }, () => {
   assert.equal(findFontFile('Fira Code', [path.dirname(firaFile)]), firaFile)
   assert.equal(findFontFile('No Such Font', [path.dirname(firaFile)]), undefined)
+})
+
+// On Windows, fonts are looked up in the Windows font folders directly, with no copying
+test('on Windows the user and system font folders are searched after ~/.local/share/fonts', () => {
+  // The separator follows path.join on the OS running the test, so convert to / before comparing
+  const slash = dir => dir.replaceAll('\\', '/')
+  const home = 'C:/Users/someone'
+  const dirs = fontDirs(home, 'win32').map(slash)
+  assert.equal(dirs[0], slash(path.join(home, '.local/share/fonts')))
+  assert.ok(dirs.includes(slash(path.join(home, 'AppData/Local/Microsoft/Windows/Fonts'))))
+  assert.ok(dirs.some(dir => /\/Fonts$/i.test(dir) && !dir.startsWith(home)))
 })

@@ -130,7 +130,7 @@ test('box drawing for a flowchart, and an error for a diagram too wide', () => {
 })
 
 test('a picture is a PNG of whole cells; an unsupported diagram fails', () => {
-  const outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'mermaid-inline-'))
+  const outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'mermaid-tint-'))
   const request = { ...JETBRAINS, outDir, theme: 'auto', overrides: {}, terminal: {}, prefersDark: true, font: 'auto' }
   const result = renderPicture({ key: 'p', source: 'graph TD\n  A[Start] --> B[End]', maxColumns: 80, maxRows: 40 }, request)
   const png = fs.readFileSync(result.file)

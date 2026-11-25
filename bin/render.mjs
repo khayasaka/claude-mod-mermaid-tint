@@ -2,7 +2,7 @@
 //
 //   { items: [{ key, source, math: [{ start, end, text }], kind: 'png' | 'text', maxColumns, maxRows }], outDir,
 //     rowPx, cellRatio, lineEm, textScale, theme, overrides: { bg, fg, ... },
-//     terminal: { background, foreground }, prefersDark, font }
+//     terminal: { background, foreground }, prefersDark, font, boxColors }
 //   -> { results: [{ key, file, columns, rows } | { key, text, columns, rows } | { key, error }] }
 //
 // Each result is also written to `<outDir>/<key>.json`, the mod's cache, and

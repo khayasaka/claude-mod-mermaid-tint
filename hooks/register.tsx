@@ -3,9 +3,14 @@ import type { EngineInterface, Register } from 'claude-code'
 import { splitReply } from './parse'
 import { diagramStyle, parseColors, type ColorKey, type DiagramStyle } from './support'
 import { mathSpans, type MathSpan } from './tex'
+// Imported so the type check includes the $.state contract (types/index.d.ts)
+import type { MermaidTintStateKey } from '../types'
 
 // Part of every cache key: bump it when bin/render.mjs draws differently.
 const VERSION = 2
+// A revision that only goes into the cache key, raised when a change draws diagrams differently with the same options (1: edge steps removed, 2: arrow heads turned).
+// It is kept apart from VERSION: raising VERSION renames the cache folder (v2), and pruneFallback would stop finding the old pictures in the fallback folder
+const LOCAL_REVISION = 2
 // Pixels per terminal row in the pictures; the terminal scales each picture
 // to its cells, so this only sets how sharp they are.
 const ROW_PX = 48
@@ -32,7 +37,7 @@ const THEMES = [
 // a diagram will be seen as one and writes the kinds the renderer reads.
 const DIAGRAM_INSTRUCTION = [
   '# Diagrams in replies',
-  'This terminal draws Mermaid diagrams in your replies as pictures (the mermaid-inline plugin renders them).',
+  'This terminal draws Mermaid diagrams in your replies as pictures (the mermaid-tint plugin renders them).',
   'When a diagram explains something better than prose would (an architecture, a flow of data or control, a state machine, the calls between components, a class or entity model), write it as a fenced code block with the language mermaid, on its own at the top level of the reply rather than inside a list item.',
   'Use flowchart (graph TD or graph LR), sequenceDiagram, stateDiagram-v2, classDiagram, erDiagram or xychart-beta; other kinds are shown as code. Write node ids in ASCII letters and digits; labels may be in any language.',
   'Keep a diagram small enough to read in a terminal: about 12 nodes at most, each label a few words on one line (no <br/>), a decision a short question, details in the text around it. Prefer graph TD for long chains, which grow wide in graph LR.',
@@ -53,6 +58,21 @@ const inflight = new Set<string>()
 // The last drawing of each diagram, shown while the same diagram renders at a
 // new width.
 const lastDrawn = new Map<string, Picture | Art>()
+// The base64 of each diagram's PNG, so that Image gets the picture as data rather than as a file path.
+// A terminal on Windows can't open a WSL path (~/.cache/mermaid-inline in mermaid-inline 0.1.3), so a Claude Code running in WSL drew empty frames there.
+const pngData = new Map<string, string>()
+// The most Image takes as { png } (2 MiB). A larger picture, or one that can't be read, is passed as a file path.
+const PNG_DATA_MAX_BYTES = 2 * 1024 * 1024
+// A note for the model, added once to the next prompt, when node_modules is missing.
+// Claude Code installs no npm packages for a plugin loaded from a folder, and without them diagrams stay code with no visible reason.
+// The mod doesn't run npm ci itself: Claude runs it with Bash, so the user's permission rules apply.
+let packagesNotice: string | undefined
+// The session's scratchpad folder. Diagrams are cached there so they are cleaned up with the session's transcript:
+// Claude Code removes the scratchpad when it removes the transcript after cleanupPeriodDays (30 days by default).
+// Pictures kept in XDG_CACHE_HOME or ~/.cache stayed after their session was gone.
+const SCRATCHPAD_DIR = { plugin: 'mermaid-tint', key: 'scratchpadDir' satisfies MermaidTintStateKey } as const
+// How many days pictures stay in the fallback folder by default, matching Claude Code's default cleanupPeriodDays (30)
+const DEFAULT_CLEANUP_DAYS = 30
 let isRendering = false
 
 // The picture geometry: the terminal font's cell (height over width) and the
@@ -70,8 +90,10 @@ let config = {
   overrides: {} as Partial<Record<ColorKey, string>>,
   font: 'auto',
   prefersDark: true,
+  // Whether each box gets its own color (bin/box-colors.mjs)
+  boxColors: true,
 }
-// What bin/terminal.mjs made of the terminal, and what the options held, for /mermaid-inline.
+// What bin/terminal.mjs made of the terminal, and what the options held, for /mermaid-tint.
 let fontReport = 'not looked up'
 let colorReport = 'not looked up'
 let optionNotes: string[] = []
@@ -97,13 +119,14 @@ function drawingSettings() {
     terminal,
     prefersDark: config.prefersDark,
     font: config.font,
+    boxColors: config.boxColors,
   }
 }
 
 // cyrb53 by bryc, public domain (linked in the README): a short stable key
 // for the cache file names.
 function keyOf(job: Job): string {
-  const s = `${VERSION}|${JSON.stringify(drawingSettings())}|${job.kind}|${job.maxColumns}|${job.maxRows}|${job.source}|${JSON.stringify(job.math)}`
+  const s = `${VERSION}.${LOCAL_REVISION}|${JSON.stringify(drawingSettings())}|${job.kind}|${job.maxColumns}|${job.maxRows}|${job.source}|${JSON.stringify(job.math)}`
   let h1 = 0xdeadbeef
   let h2 = 0x41c6ce57
   for (let i = 0; i < s.length; i++) {
@@ -206,8 +229,40 @@ async function drain($: EngineInterface): Promise<void> {
   $.ui.invalidate('ui.render')
 }
 
+// Removes the pictures written more than `days` days ago from the fallback folder (XDG_CACHE_HOME or ~/.cache).
+// Claude Code never cleans that folder, so pictures from sessions without a scratchpad would stay there.
+// The files are picked here by modification time, and only the deletion is left to bin/prune.mjs, since $.fs has no way to remove a file.
+// When nothing is old enough, no node process is started.
+async function pruneFallback($: EngineInterface, dir: string, days: number): Promise<void> {
+  try {
+    const cutoff = (await $.clock.now()) - days * 24 * 60 * 60 * 1000
+    const names = (await $.fs.list(dir))
+      .filter(entry => entry.kind === 'file' && /\.(png|json)$/.test(entry.name) && entry.mtimeMs < cutoff)
+      .map(entry => entry.name)
+    if (names.length === 0) return
+    await $.process.run([config.node, `${$.plugin.root}/bin/prune.mjs`], { stdin: JSON.stringify({ dir, names }), timeoutMs: 30_000 })
+  } catch {
+    // A missing folder, or a node that can't start, is ignored: it doesn't affect drawing
+  }
+}
+
 function isDrawing(entry: Entry | undefined): entry is Picture | Art {
   return entry !== undefined && !('error' in entry)
+}
+
+// Reads a diagram's PNG and returns it as { png }; when it can't be read or is over the limit, returns { file }.
+// The base64 is kept in pngData, so redrawing doesn't read the file again.
+async function pictureSource($: EngineInterface, file: string): Promise<{ png: string } | { file: string; format: 'png' }> {
+  const known = pngData.get(file)
+  if (known !== undefined) return { png: known }
+  const base64 = await $.fs.read(file, { as: 'bytes' }).then(
+    bytes => bytes.base64,
+    () => undefined,
+  )
+  // A picture that couldn't be read is passed as a path, for terminals that can open it (such as on native Windows)
+  if (typeof base64 !== 'string' || base64 === '' || (base64.length * 3) / 4 > PNG_DATA_MAX_BYTES) return { file, format: 'png' }
+  pngData.set(file, base64)
+  return { png: base64 }
 }
 
 export const register: Register = (on, options) => {
@@ -223,16 +278,32 @@ export const register: Register = (on, options) => {
       KITTY_WINDOW_ID: await $.env.get('KITTY_WINDOW_ID'),
       TMUX: await $.env.get('TMUX'),
     }
-    const settings = (await $.settings.read()) as { theme?: unknown }
-    const cacheHome = (await $.env.get('XDG_CACHE_HOME')) ?? `${(await $.env.get('HOME')) ?? ''}/.cache`
+    const settings = (await $.settings.read()) as { theme?: unknown; cleanupPeriodDays?: unknown }
+    // Use the scratchpad when it is known; only sessions without one (API key logins and the like) use the fallback folder
+    const scratchpad = (await $.state.get(SCRATCHPAD_DIR)).value ?? ''
+    // On Windows without HOME, use USERPROFILE.
+    // Without it the home was empty and the cache landed at the root of the drive (/.cache)
+    const home = (await $.env.get('HOME')) ?? (await $.env.get('USERPROFILE')) ?? ''
+    const fallbackHome = (await $.env.get('XDG_CACHE_HOME')) ?? `${home}/.cache`
+    const cacheHome = scratchpad !== '' ? scratchpad : fallbackHome
     const theme = stringOption(options, 'theme', 'auto').toLowerCase()
     const parsed = parseColors(stringOption(options, 'colors', ''))
     optionNotes = []
     if (theme !== 'auto' && !THEMES.includes(theme)) optionNotes.push(`theme "${theme}" is not one of auto, ${THEMES.join(', ')}; using auto`)
     if (parsed.rejected.length > 0) optionNotes.push(`colors ignored: ${parsed.rejected.join(' ')}`)
+    // Checks that the packages bin/render.mjs uses are installed
+    const hasPackages = await $.fs.exists(`${$.plugin.root}/node_modules/beautiful-mermaid`)
+    packagesNotice = undefined
+    if (!hasPackages) {
+      optionNotes.push(`node_modules is missing; run npm ci --ignore-scripts in ${$.plugin.root}`)
+      packagesNotice =
+        `[mermaid-tint] There is no node_modules in ${$.plugin.root}, so diagrams can't be drawn and mermaid code blocks are shown as written. ` +
+        `Running npm ci --ignore-scripts in that folder fixes it. ` +
+        `Tell the user before running it with Bash.`
+    }
     config = {
       node: stringOption(options, 'node_path', 'node'),
-      cacheDir: `${cacheHome}/mermaid-inline/v${VERSION}`,
+      cacheDir: `${cacheHome}/mermaid-tint/v${VERSION}`,
       style: diagramStyle(env, stringOption(options, 'mode', 'auto')),
       teach: options.teach_claude !== false,
       textScale: Math.min(3, Math.max(0.3, numberOption(options, 'text_scale', 1))),
@@ -240,6 +311,7 @@ export const register: Register = (on, options) => {
       overrides: parsed.colors,
       font: stringOption(options, 'font', 'auto'),
       prefersDark: !(typeof settings.theme === 'string' && settings.theme.startsWith('light')),
+      boxColors: options.box_colors !== false,
     }
     fontReport = 'set by hand (font_metrics is manual)'
     colorReport = 'not looked up in this terminal'
@@ -254,15 +326,21 @@ export const register: Register = (on, options) => {
       $.clock.every(200, () => {
         void drain($)
       })
+    } else {
+      // With diagrams turned off, missing packages do no harm, so nothing is reported
+      packagesNotice = undefined
     }
     await $.command.register({
-      name: 'mermaid-inline',
-      description: 'Show whether mermaid-inline draws diagrams here, and the font and colors it uses',
+      name: 'mermaid-tint',
+      description: 'Show whether mermaid-tint draws diagrams here, and the font and colors it uses',
     })
+    // Removes old pictures from the fallback folder. Done in every session, scratchpad or not, to clear pictures an earlier session left there
+    const days = typeof settings.cleanupPeriodDays === 'number' && settings.cleanupPeriodDays > 0 ? settings.cleanupPeriodDays : DEFAULT_CLEANUP_DAYS
+    await pruneFallback($, `${fallbackHome}/mermaid-tint/v${VERSION}`, days)
     return next(e)
   })
 
-  on('command.run', { command: 'mermaid-inline' }, async () => {
+  on('command.run', { command: 'mermaid-tint' }, async () => {
     const notes = optionNotes.map(note => `Note: ${note}`)
     if (config.style === 'off') return { text: ['Diagrams: left as code (mode is off)', ...notes].join('\n') }
     if (config.style === 'text') {
@@ -277,17 +355,38 @@ export const register: Register = (on, options) => {
       `Terminal font: ${fontReport}`,
       `Cell: height/width ${geometry.cellRatio.toFixed(3)}, ${geometry.lineEm.toFixed(3)} em tall`,
       `Terminal colors: ${colorReport}`,
-      `Design: theme ${config.theme}${overrides ? `, colors ${overrides}` : ''}, font ${config.font}, text ${config.textScale}x`,
+      `Design: theme ${config.theme}${overrides ? `, colors ${overrides}` : ''}, font ${config.font}, text ${config.textScale}x, box colors ${config.boxColors ? 'on' : 'off'}`,
       `Pictures: ${config.cacheDir}`,
       ...notes,
     ]
     return { text: lines.join('\n') }
   })
 
+  // Keeps the scratchpad_dir from the SessionStart hook's input as the diagram cache.
+  // The hooks documentation lists scratchpad_dir among the common inputs, but the mod type declarations don't have it yet, so its type is checked here.
+  // The cacheDir in config is replaced here too, so it works when this arrives after session.start.
+  on('classic.SessionStart', async ($, e, next) => {
+    const dir = (e as { scratchpad_dir?: unknown }).scratchpad_dir
+    if (typeof dir === 'string' && dir !== '') {
+      await $.state.set(SCRATCHPAD_DIR, dir)
+      config = { ...config, cacheDir: `${dir}/mermaid-tint/v${VERSION}` }
+    }
+    return next(e)
+  })
+
+  // Adds the missing node_modules note to the session's first prompt, once.
+  // Slash commands and meta prompts don't carry it.
+  on('prompt.submit', ($, e, next) => {
+    if (packagesNotice === undefined || e.command !== undefined || e.isMeta === true) return next(e)
+    const context = packagesNotice
+    packagesNotice = undefined
+    return next({ ...e, context: [...(e.context ?? []), context] })
+  })
+
   on('prompt.compose', async ($, e, next) => {
     const composed = await next(e)
     if (config.style !== 'pictures' || !config.teach || !e.surfaces.includes('terminal')) return composed
-    return { sections: [...composed.sections, { id: 'mermaid-inline:diagrams', text: DIAGRAM_INSTRUCTION, scope: 'session' as const }] }
+    return { sections: [...composed.sections, { id: 'mermaid-tint:diagrams', text: DIAGRAM_INSTRUCTION, scope: 'session' as const }] }
   })
 
   on('ui.render', { component: 'AssistantMessage' }, async ($, e, next) => {
@@ -355,6 +454,7 @@ export const register: Register = (on, options) => {
         }
       } else {
         const header = segment.kind === 'mermaid' ? (segment.source.trim().split('\n')[0] ?? '').trim() : ''
+        const source = 'file' in drawing ? await pictureSource($, drawing.file) : undefined
         rows.push(
           <Box flexDirection="row" marginTop={1} paddingRight={1}>
             <Box width={2 + indent} flexShrink={0}>
@@ -362,7 +462,7 @@ export const register: Register = (on, options) => {
             </Box>
             {'file' in drawing ? (
               <Box flexDirection="row" flexGrow={1} justifyContent={indent > 0 ? 'flex-start' : 'center'}>
-                <Image source={{ file: drawing.file, format: 'png' }} columns={drawing.columns} rows={drawing.rows} alt={`[diagram: ${header}]`} />
+                <Image source={source ?? { file: drawing.file, format: 'png' }} columns={drawing.columns} rows={drawing.rows} alt={`[diagram: ${header}]`} />
               </Box>
             ) : (
               <Box flexDirection="column" flexShrink={1}>

@@ -1,18 +1,20 @@
 {
-  "name": "mermaid-inline",
-  "displayName": "Mermaid Inline",
-  "version": "0.1.3",
-  "description": "Draws the Mermaid diagrams in Claude's replies: as pictures in Ghostty, cmux and kitty, and as Unicode box drawing in other terminals",
+  "name": "mermaid-tint",
+  "displayName": "Mermaid Tint",
+  "version": "0.6.0",
+  "types": "./types/index.d.ts",
+  "description": "Draws the Mermaid diagrams in Claude's replies, with a color for each box: as pictures in Ghostty, cmux, kitty and gooztty (Windows), and as Unicode box drawing in other terminals. A fork of dazebug/mermaid-inline 0.1.3",
   "author": {
-    "name": "dazebug",
-    "url": "https://github.com/dazebug"
+    "name": "khayasaka",
+    "url": "https://github.com/khayasaka"
   },
-  "homepage": "https://github.com/dazebug/mermaid-inline",
-  "repository": "https://github.com/dazebug/mermaid-inline",
-  "documentationUrl": "https://github.com/dazebug/mermaid-inline#readme",
-  "supportUrl": "https://github.com/dazebug/mermaid-inline/issues",
-  "privacyPolicyUrl": "https://github.com/dazebug/mermaid-inline#privacy",
+  "homepage": "https://github.com/khayasaka/claude-mod-mermaid-tint",
+  "repository": "https://github.com/khayasaka/claude-mod-mermaid-tint",
+  "documentationUrl": "https://github.com/khayasaka/claude-mod-mermaid-tint#readme",
+  "supportUrl": "https://github.com/khayasaka/claude-mod-mermaid-tint/issues",
+  "privacyPolicyUrl": "https://github.com/khayasaka/claude-mod-mermaid-tint#privacy",
   "license": "MIT",
+  "engines": { "claude-code": ">=2.1.331" },
   "keywords": [
     "mermaid",
     "diagram",
@@ -46,6 +48,12 @@
       "title": "Color overrides",
       "description": "Colors that win over the theme's, as key=#rrggbb pairs separated by spaces: bg (background), fg (text), line (edges), accent (arrow heads, highlights, chart series), muted (secondary text), surface (node fill), border (node outline). For example: accent=#d77757 line=#5c6370",
       "default": ""
+    },
+    "box_colors": {
+      "type": "boolean",
+      "title": "Diagram box colors",
+      "description": "On (the default), each box of a flowchart, state, sequence, class or ER diagram gets its own outline color from the theme, with a light fill of that color. Off keeps the theme's single box color. A box given its own style in the diagram keeps it.",
+      "default": true
     },
     "font": {
       "type": "string",

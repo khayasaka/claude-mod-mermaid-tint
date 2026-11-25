@@ -5,7 +5,9 @@ import { test } from 'node:test'
 import { ghosttyColors, kittyColors, normalizeColor, parseGhosttyColors, themeName } from '../bin/terminal-colors.mjs'
 
 // A file system of the files named here alone.
-const files = contents => file => contents[file] ?? ''
+// On Windows path.join separates with a backslash, so paths are converted to `/` before they are looked up
+// (the tests compared with `/` alone, and three of them failed on Windows)
+const files = contents => file => contents[file.replaceAll('\\', '/')] ?? ''
 
 test('colors are read as #rrggbb', () => {
   assert.equal(normalizeColor('#282C34'), '#282c34')
