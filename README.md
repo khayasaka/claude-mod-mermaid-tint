@@ -24,6 +24,7 @@ It is a fork of [dazebug/mermaid-inline](https://github.com/dazebug/mermaid-inli
   - Arrow heads are rewritten in a form resvg can read. In mermaid-inline, class diagram arrows pointed right even on downward edges, inheritance triangles, aggregation and composition diamonds and the start of `<-->` edges were missing, and leftward messages in sequence diagrams pointed right.
 - **More kinds of diagrams**: `pie`, `timeline` and `mindmap` are drawn too, as pictures and in box drawing. mermaid-inline left them as code.
 - **Box drawing stays in its columns with CJK labels**: letters that take two cells in the terminal, such as Chinese, Japanese and Korean script and wide emoji, are laid out as two cells. In mermaid-inline, the box lines after them landed a column short.
+- **Boxes fit their labels in any font**: labels are measured in the fonts the picture is drawn with, and boxes are sized to them. mermaid-inline used beautiful-mermaid's estimate for Inter, so a label in a wider font could reach the edges of its box, and Japanese labels got wide margins.
 - **Tells you when packages are missing**: when the renderer's npm packages can't be found, Claude is told on the next prompt, and `/mermaid-tint` shows it.
 
 ## Requirements

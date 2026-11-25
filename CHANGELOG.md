@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.0
+
+- Sizes boxes to their labels as drawn. beautiful-mermaid estimates text widths for Inter, which in other fonts was off by up to a third: Latin text in BIZ UDPGothic overran its estimate, and Japanese fell short of it, leaving wide margins. The diagram is now laid out twice: the first layout collects the labels, which are all measured in one picture in the fonts the diagram is drawn with, and the second lays the boxes out with those widths. Measuring adds about 0.1 s to a diagram the first time it is drawn. Pictures drawn before are drawn again.
+- Updates the bundled beautiful-mermaid to commit `1299504` of the fork, which adds the `measureText` option this uses.
+
 ## 0.8.2
 
 - Draws labels on Windows with `font` set to `auto`, the default. The mod gave the renderer no font there, since its default fonts were looked up only in the macOS and Linux folders, so pictures came out with no text. It now uses Segoe UI (or Arial) for labels and Consolas for class members, and falls back to Yu Gothic, Malgun Gothic and Microsoft YaHei for CJK text, so a font without those characters, such as Consolas, no longer leaves them out. Pictures drawn before are drawn again.

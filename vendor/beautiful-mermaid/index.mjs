@@ -189,6 +189,19 @@ function svgOpenTag(width, height, colors, transparent) {
 }
 
 // src/text-metrics.ts
+var activeMeasurer;
+function withTextMeasurer(measurer, draw) {
+  const previous = activeMeasurer;
+  activeMeasurer = measurer;
+  try {
+    return draw();
+  } finally {
+    activeMeasurer = previous;
+  }
+}
+function measureWithActive(text, style) {
+  return activeMeasurer?.(text, style);
+}
 var NARROW_CHARS = /* @__PURE__ */ new Set(["i", "l", "t", "f", "j", "I", "1", "!", "|", ".", ",", ":", ";", "'"]);
 var WIDE_CHARS = /* @__PURE__ */ new Set(["W", "M", "w", "m", "@", "%"]);
 var VERY_WIDE_CHARS = /* @__PURE__ */ new Set(["W", "M"]);
@@ -235,12 +248,14 @@ function getCharWidth(char) {
   return 1;
 }
 function measureTextWidth(text, fontSize, fontWeight) {
+  const minPadding = fontSize * 0.15;
+  const measured = measureWithActive(text, { fontSize, fontWeight, mono: false });
+  if (measured !== void 0) return measured + minPadding;
   const baseRatio = fontWeight >= 600 ? 0.6 : fontWeight >= 500 ? 0.57 : 0.54;
   let totalWidth = 0;
   for (const char of text) {
     totalWidth += getCharWidth(char);
   }
-  const minPadding = fontSize * 0.15;
   return totalWidth * fontSize * baseRatio + minPadding;
 }
 var LINE_HEIGHT_RATIO = 1.3;
@@ -6309,6 +6324,8 @@ function estimateTextWidth(text, fontSize, fontWeight) {
   return measureTextWidth(text, fontSize, fontWeight);
 }
 function estimateMonoTextWidth(text, fontSize) {
+  const measured = measureWithActive(text, { fontSize, fontWeight: 400, mono: true });
+  if (measured !== void 0) return measured;
   return text.length * fontSize * 0.6;
 }
 var MONO_FONT = "'JetBrains Mono'";
@@ -10371,6 +10388,9 @@ function buildColors(options) {
   };
 }
 function renderMermaidSVG(text, options = {}) {
+  return withTextMeasurer(options.measureText, () => drawSVG(text, options));
+}
+function drawSVG(text, options) {
   text = decodeXML(text);
   const colors = buildColors(options);
   const font = options.font ?? "Inter";

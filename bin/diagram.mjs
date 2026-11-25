@@ -21,6 +21,7 @@ import { colorBoxes } from './box-colors.mjs'
 import { resolveCss } from './css.mjs'
 import { pickFonts } from './fonts.mjs'
 import { fixMarkerOrient } from './markers.mjs'
+import { measureTexts, textKey } from './measure.mjs'
 import { straightenEdges } from './straighten-edges.mjs'
 
 const require = createRequire(import.meta.url)
@@ -211,11 +212,21 @@ export function renderPicture(item, request) {
   checkDrawn(item.source)
   const { colors, card, theme } = diagramColors(request)
   const source = withMath(item.source, item.math)
-  const drawn = renderMermaidSVG(source, {
+  const fonts = pickFonts({ font: request.font })
+  if (!WIDE_SCRIPT.test(source)) fonts.files = [fonts.sans?.file, fonts.mono?.file].filter(Boolean)
+  const font = { loadSystemFonts: false, fontFiles: fonts.files, defaultFontFamily: fonts.sans?.family ?? 'sans-serif' }
+  const options = {
     ...Object.fromEntries(COLOR_KEYS.filter(key => colors[key]).map(key => [key, colors[key]])),
     transparent: true,
     padding: card ? CARD_PADDING : PADDING,
-  })
+  }
+  // The diagram is laid out twice: the first time only collects the texts beautiful-mermaid measures, all of
+  // which are then measured in one picture (bin/measure.mjs); the second uses those widths. A text the first
+  // layout did not ask for keeps the estimate
+  const asked = []
+  renderMermaidSVG(source, { ...options, measureText: (text, style) => void asked.push([text, style]) })
+  const widths = measureTexts(asked, fonts, font, Resvg)
+  const drawn = renderMermaidSVG(source, { ...options, measureText: (text, style) => widths.get(textKey(text, style)) })
   // Turn arrow heads so resvg can read them, remove small steps in edges, and give each box its own color.
   // With box_colors set to false, boxes keep beautiful-mermaid's colors
   const straight = straightenEdges(fixMarkerOrient(drawn))
@@ -224,8 +235,6 @@ export function renderPicture(item, request) {
   const [, , width, height] = (viewBox?.[1] ?? '0 0 0 0').split(/\s+/).map(Number)
   if (!(width > 0 && height > 0)) throw new Error('nothing to draw')
 
-  const fonts = pickFonts({ font: request.font })
-  if (!WIDE_SCRIPT.test(source)) fonts.files = [fonts.sans?.file, fonts.mono?.file].filter(Boolean)
   const svg = prepareSvg(raw, colors, fonts)
   const fit = fitToCells({ width, height }, request, item.maxColumns, item.maxRows)
   const drawnWidth = width * fit.scale
@@ -240,7 +249,7 @@ export function renderPicture(item, request) {
   const page = `<svg xmlns="${namespace}" width="${fit.pixelWidth}" height="${fit.pixelHeight}" viewBox="0 0 ${fit.pixelWidth} ${fit.pixelHeight}">${backdrop}${inner}</svg>`
   const png = new Resvg(page, {
     fitTo: { mode: 'original' },
-    font: { loadSystemFonts: false, fontFiles: fonts.files, defaultFontFamily: fonts.sans?.family ?? 'sans-serif' },
+    font,
   })
     .render()
     .asPng()
