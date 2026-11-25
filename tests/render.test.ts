@@ -240,6 +240,25 @@ test('the cache moves to the scratchpad when SessionStart comes after the sessio
   expect(await picturesLine($)).toBe('Pictures: /tmp/claude/p/s2/scratchpad/mermaid-tint/v2')
 })
 
+// A Windows scratchpad uses backslashes, and the folders under it follow, both in SessionStart before and after the session starts
+test('a Windows scratchpad keeps its backslashes in the cache folder', { options: { mode: 'on', font_metrics: 'manual' } }, async ($, on) => {
+  engine(on)
+  on('classic.SessionStart', () => ({}))
+  await $.classic.SessionStart({ source: 'startup', scratchpad_dir: 'C:\\Temp\\claude\\s3\\scratchpad' } as never)
+  await $.session.start(SESSION)
+  expect(await picturesLine($)).toBe('Pictures: C:\\Temp\\claude\\s3\\scratchpad\\mermaid-tint\\v2')
+  await $.classic.SessionStart({ source: 'clear', scratchpad_dir: 'C:\\Temp\\claude\\s4\\scratchpad\\' } as never)
+  expect(await picturesLine($)).toBe('Pictures: C:\\Temp\\claude\\s4\\scratchpad\\mermaid-tint\\v2')
+})
+
+// Without HOME on Windows, the usual cache folder is joined under USERPROFILE with its own backslashes
+test('a Windows USERPROFILE keeps its backslashes in the usual cache folder', { options: { mode: 'on', font_metrics: 'manual' } }, async ($, on) => {
+  engine(on, undefined, { env: { USERPROFILE: 'C:\\Users\\taro' } })
+  on('classic.SessionStart', () => ({}))
+  await $.session.start(SESSION)
+  expect(await picturesLine($)).toBe('Pictures: C:\\Users\\taro\\.cache\\mermaid-tint\\v2')
+})
+
 test('without a scratchpad the cache stays in the usual cache folder', { options: { mode: 'on', font_metrics: 'manual' } }, async ($, on) => {
   engine(on)
   on('classic.SessionStart', () => ({}))

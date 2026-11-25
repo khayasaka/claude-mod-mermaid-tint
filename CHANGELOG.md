@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.1
+
+- Joins the cache folder with the separator its base folder already uses, so on Windows `/mermaid-tint` shows `C:\...\scratchpad\mermaid-tint\v2` instead of mixing `\` and `/`.
+
 ## 0.6.0
 
 - First release, forked from [dazebug/mermaid-inline](https://github.com/dazebug/mermaid-inline) 0.1.3. Versions 0.2.0 to 0.5.2 were unpublished local versions.

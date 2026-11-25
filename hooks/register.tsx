@@ -108,6 +108,14 @@ function stringOption(options: Options, key: string, fallback: string): string {
   return typeof value === 'string' && value.trim() !== '' ? value.trim() : fallback
 }
 
+// Joins path segments with the separator the base already uses, so a Windows folder (C:\...\scratchpad) doesn't end in /mermaid-tint/v2.
+// The module has no Node, so node:path isn't available, and $ has no way to ask for the platform's separator.
+// A base without a backslash (POSIX, or a Windows path written with /) keeps using /.
+function joinPath(base: string, ...parts: string[]): string {
+  const separator = base.includes('\\') ? '\\' : '/'
+  return [base.replace(/[\\/]+$/, ''), ...parts].join(separator)
+}
+
 // The settings a drawing depends on, beside the diagram itself.
 function drawingSettings() {
   return {
@@ -185,7 +193,7 @@ async function lookup($: EngineInterface, job: Job): Promise<Entry | undefined> 
   const id = keyOf(job)
   const known = entries.get(id)
   if (known !== undefined || queue.has(id) || inflight.has(id)) return known
-  const sidecar = `${config.cacheDir}/${id}.json`
+  const sidecar = joinPath(config.cacheDir, `${id}.json`)
   try {
     if (await $.fs.exists(sidecar)) {
       const entry = JSON.parse(await $.fs.read(sidecar)) as Entry
@@ -284,7 +292,7 @@ export const register: Register = (on, options) => {
     // On Windows without HOME, use USERPROFILE.
     // Without it the home was empty and the cache landed at the root of the drive (/.cache)
     const home = (await $.env.get('HOME')) ?? (await $.env.get('USERPROFILE')) ?? ''
-    const fallbackHome = (await $.env.get('XDG_CACHE_HOME')) ?? `${home}/.cache`
+    const fallbackHome = (await $.env.get('XDG_CACHE_HOME')) ?? joinPath(home, '.cache')
     const cacheHome = scratchpad !== '' ? scratchpad : fallbackHome
     const theme = stringOption(options, 'theme', 'auto').toLowerCase()
     const parsed = parseColors(stringOption(options, 'colors', ''))
@@ -303,7 +311,7 @@ export const register: Register = (on, options) => {
     }
     config = {
       node: stringOption(options, 'node_path', 'node'),
-      cacheDir: `${cacheHome}/mermaid-tint/v${VERSION}`,
+      cacheDir: joinPath(cacheHome, 'mermaid-tint', `v${VERSION}`),
       style: diagramStyle(env, stringOption(options, 'mode', 'auto')),
       teach: options.teach_claude !== false,
       textScale: Math.min(3, Math.max(0.3, numberOption(options, 'text_scale', 1))),
@@ -336,7 +344,7 @@ export const register: Register = (on, options) => {
     })
     // Removes old pictures from the fallback folder. Done in every session, scratchpad or not, to clear pictures an earlier session left there
     const days = typeof settings.cleanupPeriodDays === 'number' && settings.cleanupPeriodDays > 0 ? settings.cleanupPeriodDays : DEFAULT_CLEANUP_DAYS
-    await pruneFallback($, `${fallbackHome}/mermaid-tint/v${VERSION}`, days)
+    await pruneFallback($, joinPath(fallbackHome, 'mermaid-tint', `v${VERSION}`), days)
     return next(e)
   })
 
@@ -369,7 +377,7 @@ export const register: Register = (on, options) => {
     const dir = (e as { scratchpad_dir?: unknown }).scratchpad_dir
     if (typeof dir === 'string' && dir !== '') {
       await $.state.set(SCRATCHPAD_DIR, dir)
-      config = { ...config, cacheDir: `${dir}/mermaid-tint/v${VERSION}` }
+      config = { ...config, cacheDir: joinPath(dir, 'mermaid-tint', `v${VERSION}`) }
     }
     return next(e)
   })
