@@ -1,5 +1,6 @@
 // Gives each box of a diagram its own outline color, and a fill of that color mixed lightly into the background.
 // Boxes are flowchart and state diagram nodes, sequence diagram participants, class diagram classes and ER diagram entities.
+// A timeline's period and its events share one color, and so do a mindmap's nodes on one branch from the root.
 // The idea comes from NahumLitvin/prismantis, which colors each box of its text diagrams.
 //
 // beautiful-mermaid's SVG writes each box as a group such as <g class="node" data-id="…">,
@@ -8,8 +9,14 @@
 // the start and end circles of a state diagram (drawn in the text color) stay as they are.
 // The fill is written with color-mix(), and css.mjs's resolveCss mixes it with the background, so colors are worked out in one place.
 
-// The classes of the groups that get colors (node: flowchart and state diagram, actor: sequence diagram, class-node: class diagram, entity: ER diagram)
-const BOX_CLASSES = new Set(['node', 'actor', 'class-node', 'entity'])
+// The classes of the groups that get colors (node: flowchart and state diagram, actor: sequence diagram, class-node: class diagram, entity: ER diagram,
+// timeline-period: a timeline's period with its events, mindmap-node: a mindmap node, whose data-id names its branch).
+// The timeline and mindmap groups come from the bundled fork of beautiful-mermaid (vendor/beautiful-mermaid)
+const BOX_CLASSES = new Set(['node', 'actor', 'class-node', 'entity', 'timeline-period', 'mindmap-node'])
+
+// Where in the palette each class starts. A mindmap's root is filled with the accent, which is often the palette's
+// first color (blue in nord-light), so its branches start from the second
+const PALETTE_START = { 'mindmap-node': 1 }
 
 // How much of the box color goes into the fill (%).
 // A dark background takes more, since a light tint sinks into it
@@ -89,7 +96,7 @@ export function colorBoxes(svg, { theme, light }) {
     const body = svg.slice(start, end)
     // A box that doesn't use the default colors (one with a style, or a start or end circle) keeps its colors and takes no color from the order
     if (!body.includes('var(--_node-fill)') && !body.includes('var(--_node-stroke)')) continue
-    if (!assigned.has(m[2])) assigned.set(m[2], palette[assigned.size % palette.length])
+    if (!assigned.has(m[2])) assigned.set(m[2], palette[(assigned.size + (PALETTE_START[m[1]] ?? 0)) % palette.length])
     out += svg.slice(pos, start) + recolor(body, assigned.get(m[2]), share)
     pos = end
     open.lastIndex = end

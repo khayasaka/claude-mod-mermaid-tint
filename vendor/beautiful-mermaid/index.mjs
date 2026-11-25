@@ -9821,7 +9821,6 @@ function renderTimelineSvg(positioned, colors, font = "Inter", transparent = fal
   parts.push(`<style>
   .timeline-axis-line { stroke: var(--_line); stroke-width: 1.5; stroke-linecap: round; }
   .timeline-connector { stroke: var(--_line); stroke-width: 1; stroke-dasharray: 3 3; fill: none; }
-  .timeline-box { fill: var(--_node-fill); stroke: var(--_node-stroke); stroke-width: ${STROKE_WIDTHS.innerBox}; }
   .timeline-box-label { fill: var(--_text); font-weight: 600; }
   .timeline-event-label { fill: var(--_text); font-weight: 500; }
   .timeline-period-dot { fill: var(--accent, color-mix(in srgb, var(--fg) 85%, var(--bg))); stroke: var(--bg); stroke-width: 2; }
@@ -9837,6 +9836,8 @@ function renderTimelineSvg(positioned, colors, font = "Inter", transparent = fal
       `<text x="${r3(positioned.title.x)}" y="${r3(positioned.title.y)}" text-anchor="middle" font-size="18" font-weight="600" dy="${TEXT_BASELINE_SHIFT}" class="timeline-title">${escapeXml(positioned.title.text)}</text>`
     );
   }
+  const boxColors = `fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="${STROKE_WIDTHS.innerBox}"`;
+  let periodIndex = 0;
   for (const section of positioned.sections) {
     if (section.name !== "default") {
       parts.push(
@@ -9856,16 +9857,18 @@ function renderTimelineSvg(positioned, colors, font = "Inter", transparent = fal
         parts.push(
           `<line x1="${r3(period.centerX)}" y1="${r3(period.y)}" x2="${r3(period.centerX)}" y2="${r3(connectorBottom)}" class="timeline-connector" marker-end="url(#timeline-arrow)"/>`
         );
-        parts.push(`<rect x="${r3(period.x)}" y="${r3(period.y)}" width="${r3(period.width)}" height="${r3(period.height)}" rx="0" class="timeline-box"/>`);
+        parts.push(`<g class="timeline-period" data-id="period-${periodIndex++}">`);
+        parts.push(`<rect x="${r3(period.x)}" y="${r3(period.y)}" width="${r3(period.width)}" height="${r3(period.height)}" rx="0" class="timeline-box" ${boxColors}/>`);
         parts.push(
           `<text x="${r3(period.centerX)}" y="${r3(period.y + period.height / 2)}" text-anchor="middle" font-size="${FONT_SIZES.nodeLabel}" dy="${TEXT_BASELINE_SHIFT}" class="timeline-box-label">${escapeXml(period.label)}</text>`
         );
         for (const ev of period.events) {
-          parts.push(`<rect x="${r3(ev.x)}" y="${r3(ev.y)}" width="${r3(ev.width)}" height="${r3(ev.height)}" rx="0" class="timeline-box"/>`);
+          parts.push(`<rect x="${r3(ev.x)}" y="${r3(ev.y)}" width="${r3(ev.width)}" height="${r3(ev.height)}" rx="0" class="timeline-box" ${boxColors}/>`);
           parts.push(
             `<text x="${r3(period.centerX)}" y="${r3(ev.y + ev.height / 2)}" text-anchor="middle" font-size="${FONT_SIZES.nodeLabel}" dy="${TEXT_BASELINE_SHIFT}" class="timeline-event-label">${escapeXml(ev.text)}</text>`
           );
         }
+        parts.push("</g>");
       }
       continue;
     }
@@ -10152,7 +10155,7 @@ function maxY(n) {
 
 // src/mindmap/renderer.ts
 var r4 = (n) => String(Math.round(n * 10) / 10);
-function shapePath(node) {
+function shapePath(node, attrs) {
   const { x, y, width, height } = node;
   const cx = x + width / 2;
   const cy = y;
@@ -10160,7 +10163,7 @@ function shapePath(node) {
   const ry = height / 2;
   switch (node.shape) {
     case "circle":
-      return `<ellipse cx="${r4(cx)}" cy="${r4(cy)}" rx="${r4(rx)}" ry="${r4(ry)}" class="mindmap-shape"/>`;
+      return `<ellipse cx="${r4(cx)}" cy="${r4(cy)}" rx="${r4(rx)}" ry="${r4(ry)}" class="mindmap-shape"${attrs}/>`;
     case "hexagon": {
       const hx = rx / 2;
       const pts = [
@@ -10171,15 +10174,15 @@ function shapePath(node) {
         `${r4(cx - hx)},${r4(cy - ry)}`,
         `${r4(cx + hx)},${r4(cy - ry)}`
       ];
-      return `<polygon points="${pts.join(" ")}" class="mindmap-shape"/>`;
+      return `<polygon points="${pts.join(" ")}" class="mindmap-shape"${attrs}/>`;
     }
     case "rounded":
-      return `<rect x="${r4(x)}" y="${r4(y - ry)}" width="${r4(width)}" height="${r4(height)}" rx="10" class="mindmap-shape"/>`;
+      return `<rect x="${r4(x)}" y="${r4(y - ry)}" width="${r4(width)}" height="${r4(height)}" rx="10" class="mindmap-shape"${attrs}/>`;
     case "square":
-      return `<rect x="${r4(x)}" y="${r4(y - ry)}" width="${r4(width)}" height="${r4(height)}" class="mindmap-shape"/>`;
+      return `<rect x="${r4(x)}" y="${r4(y - ry)}" width="${r4(width)}" height="${r4(height)}" class="mindmap-shape"${attrs}/>`;
     case "default":
     default:
-      return `<rect x="${r4(x)}" y="${r4(y - ry)}" width="${r4(width)}" height="${r4(height)}" rx="6" class="mindmap-shape"/>`;
+      return `<rect x="${r4(x)}" y="${r4(y - ry)}" width="${r4(width)}" height="${r4(height)}" rx="6" class="mindmap-shape"${attrs}/>`;
   }
 }
 function renderEdges(node) {
@@ -10197,15 +10200,16 @@ function renderEdges(node) {
   }
   return parts.join("\n");
 }
-function renderNodes(node, isRoot) {
+var NODE_COLORS = ' fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1.5"';
+function renderNodes(node, isRoot, branch = 0) {
   const parts = [];
-  const cls = isRoot ? "mindmap-root" : "mindmap-node";
+  const open = isRoot ? `<g class="mindmap-root" data-depth="${node.depth}">` : `<g class="mindmap-node" data-id="branch-${branch}" data-depth="${node.depth}">`;
   parts.push(
-    `<g class="${cls}" data-depth="${node.depth}">` + shapePath(node) + `<text x="${r4(node.x + node.width / 2)}" y="${r4(node.y)}" text-anchor="middle" font-size="${FONT_SIZES.nodeLabel}" font-weight="${isRoot ? 600 : FONT_WEIGHTS.nodeLabel}" dy="${TEXT_BASELINE_SHIFT}" class="mindmap-text">${escapeXml(node.text)}</text></g>`
+    open + shapePath(node, isRoot ? "" : NODE_COLORS) + `<text x="${r4(node.x + node.width / 2)}" y="${r4(node.y)}" text-anchor="middle" font-size="${FONT_SIZES.nodeLabel}" font-weight="${isRoot ? 600 : FONT_WEIGHTS.nodeLabel}" dy="${TEXT_BASELINE_SHIFT}" class="mindmap-text">${escapeXml(node.text)}</text></g>`
   );
-  for (const child of node.children) {
-    parts.push(renderNodes(child, false));
-  }
+  node.children.forEach((child, i) => {
+    parts.push(renderNodes(child, false, isRoot ? i : branch));
+  });
   return parts.join("\n");
 }
 function renderMindmapSvg(positioned, colors, font = "Inter", transparent = false) {
@@ -10217,7 +10221,6 @@ function renderMindmapSvg(positioned, colors, font = "Inter", transparent = fals
   .mindmap-edge { stroke: var(--_line); stroke-width: 1.5; }
   .mindmap-root rect, .mindmap-root ellipse, .mindmap-root polygon { fill: var(--accent, color-mix(in srgb, var(--fg) 85%, var(--bg))); stroke: var(--bg); stroke-width: 2; }
   .mindmap-root .mindmap-text { fill: var(--bg); }
-  .mindmap-node rect, .mindmap-node ellipse, .mindmap-node polygon { fill: var(--_node-fill); stroke: var(--_node-stroke); stroke-width: 1.5; }
   .mindmap-node .mindmap-text { fill: var(--_text); }
   .mindmap-title { fill: var(--_text); }
 </style>`);

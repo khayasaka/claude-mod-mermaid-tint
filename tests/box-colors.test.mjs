@@ -52,6 +52,25 @@ test('sequence participants, classes and ER entities are colored, and a particip
   assert.deepEqual(new Set(er.map(box => box.stroke)).size, 2)
 })
 
+test("a timeline's period shares one color with its events, and each period gets its own", () => {
+  const svg = colorBoxes(renderMermaidSVG('timeline\n  2024 : Alpha : Beta\n  2025 : Stable', {}), { theme: 'nord-light', light: true })
+  const [first, second] = svg.split('data-id="period-1"')
+  const firstStrokes = [...first.matchAll(/class="timeline-box"[^>]*stroke="([^"]*)"/g)].map(m => m[1])
+  const secondStrokes = [...second.matchAll(/class="timeline-box"[^>]*stroke="([^"]*)"/g)].map(m => m[1])
+  assert.deepEqual(firstStrokes, Array(3).fill(PALETTES['nord-light'][0]))
+  assert.deepEqual(secondStrokes, Array(2).fill(PALETTES['nord-light'][1]))
+})
+
+test("a mindmap's branches each get a color shared by the nodes on them, from the palette's second, and the root keeps the accent", () => {
+  const svg = colorBoxes(renderMermaidSVG('mindmap\n  root\n    A\n      A1\n    B', {}), { theme: 'nord-light', light: true })
+  const stroke = label => new RegExp(`stroke="([^"]*)"[^>]*/>\\s*<text[^>]*>${label}<`).exec(svg)?.[1]
+  assert.equal(stroke('A'), PALETTES['nord-light'][1])
+  assert.equal(stroke('A1'), PALETTES['nord-light'][1])
+  assert.equal(stroke('B'), PALETTES['nord-light'][2])
+  const root = svg.slice(svg.indexOf('<g class="mindmap-root"'), svg.indexOf('<g class="mindmap-node"'))
+  assert.doesNotMatch(root, /stroke="#/)
+})
+
 test('the auto theme picks colors by the background, a dark one mixing in more of the color', () => {
   const source = renderMermaidSVG('graph TD\n  A --> B', {})
   const [light] = boxes(colorBoxes(source, { theme: 'auto', light: true }))

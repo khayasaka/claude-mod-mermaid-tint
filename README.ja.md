@@ -26,6 +26,7 @@ Claude が ` ```mermaid ` のコードブロックを書くと、その場所に
   元はパスで渡していたので、Windows のターミナルが WSL のファイルを開けず、空の枠になっていました。
   2 MiB を超える図だけは、今までどおりパスで渡します。
 - **箱ごとに色を付ける**：フローチャート・状態遷移図・シーケンス図・クラス図・ER 図の箱に、テーマの配色から1つずつ違う色の枠を付け、中をその色で薄く塗ります。
+  タイムラインは時期とその出来事が同じ色に、マインドマップは中心から出た枝ごとに同じ色になります。
   設定の `box_colors` を `false` にすると、元と同じテーマの1色に戻ります。
 - **図が残り続けない**：描いた図は、セッションの scratchpad に置きます。
   Claude Code が古いセッションを片付けるときに、図も一緒に消えます。
@@ -155,7 +156,7 @@ beautiful-mermaid のテーマを選ぶと、そのテーマの背景の上に�
 | `teach_claude` | `true` | 画像を描くセッションで、システムプロンプトに図の節を足します。 |
 | `theme` | `auto` | `auto` か、`zinc-light`・`zinc-dark`・`tokyo-night`・`tokyo-night-storm`・`tokyo-night-light`・`catppuccin-mocha`・`catppuccin-latte`・`nord`・`nord-light`・`dracula`・`github-light`・`github-dark`・`solarized-light`・`solarized-dark`・`one-dark` のどれかです。 |
 | `colors` | なし | テーマより優先する色を、`キー=#rrggbb` の組を空白で区切って書きます。キーは `bg`（背景）・`fg`（文字）・`line`（線）・`accent`（矢印の先・強調・グラフの系列）・`muted`（補助の文字）・`surface`（箱の塗り）・`border`（箱の枠）です。例：`accent=#7aa2f7 line=#5c6370` |
-| `box_colors` | `true` | 箱ごとに、テーマの配色から違う色の枠と薄い塗りを付けます。`false` にすると、テーマの1色になります。図の中で `style` を書いた箱は、その色のままです。 |
+| `box_colors` | `true` | 箱ごとに、テーマの配色から違う色の枠と薄い塗りを付けます。タイムラインは時期ごと、マインドマップは中心から出た枝ごとに1色です。`false` にすると、テーマの1色になります。図の中で `style` を書いた箱は、その色のままです。 |
 | `font` | `auto` | ラベルのフォントです。`auto` は、macOS では Helvetica Neue、Linux では DejaVu Sans・Noto Sans・Liberation Sans です。またはインストール済みのフォントの名前を書きます。ハングルなどの CJK の文字は、その文字を持つシステムのフォントで描きます。 |
 | `text_scale` | `1` | ターミナルの文字に対するラベルの大きさです。 |
 | `node_path` | `node` | 描画に使う Node.js の実行ファイルです。 |

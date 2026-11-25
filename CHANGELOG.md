@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.8.0
+
+- Box colors for timelines and mindmaps: each period of a timeline takes one color for its box and its events, and each branch from a mindmap's root takes one color for all its nodes. The root keeps the accent color, and the branches start from the theme's second box color, since the first is often the accent's hue. A vertical timeline (`timeline TD`), drawn with dots rather than boxes, isn't colored.
+- Updates the bundled beautiful-mermaid to commit `b937557` of the fork, whose timeline and mindmap boxes now write their fill and outline as attributes and are grouped by period and by branch, as the other diagrams' boxes are.
+
 ## 0.7.3
 
 - Draws again the diagrams cached by 0.6.1 to 0.7.2. The cache key's revision wasn't raised in 0.6.2 to 0.7.2, so a diagram drawn before kept its old drawing: box drawing with CJK labels a column off, and a `pie`, `timeline` or `mindmap` block that failed before stayed code.

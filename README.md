@@ -16,7 +16,7 @@ It is a fork of [dazebug/mermaid-inline](https://github.com/dazebug/mermaid-inli
   - Label fonts are also looked up in the Windows font folders (`~\AppData\Local\Microsoft\Windows\Fonts` and `%WINDIR%\Fonts`). mermaid-inline looked only in the macOS and Linux folders.
   - On Windows without `HOME`, `USERPROFILE` is used as the home folder.
 - **Draws in a Windows terminal when Claude Code runs in WSL**: diagram pictures are passed as data rather than as file paths. mermaid-inline passed paths, which a Windows terminal can't open in WSL, so it drew empty frames. Pictures over 2 MiB are still passed as paths.
-- **A color for each box**: each box of a flowchart, state, sequence, class or ER diagram gets its own outline color from the theme, with a light fill of that color. Set `box_colors` to `false` for the theme's single box color, as in mermaid-inline.
+- **A color for each box**: each box of a flowchart, state, sequence, class or ER diagram gets its own outline color from the theme, with a light fill of that color. A timeline's period shares its color with its events, and a mindmap's nodes share the color of their branch from the root. Set `box_colors` to `false` for the theme's single box color, as in mermaid-inline.
 - **Pictures don't pile up**: diagram pictures are kept in the session's scratchpad, so Claude Code removes them with old sessions. Sessions without a scratchpad (API key logins, Bedrock and the like) use the cache folder as mermaid-inline did, and pictures there older than `cleanupPeriodDays` (30 days by default) are removed at session start.
 - **Edges and arrow heads drawn right**
   - Small steps (under 8 px) that could appear in an edge just before its arrow head are removed.
@@ -105,7 +105,7 @@ Set options with `/plugin configure mermaid-tint@claude-mod-mermaid-tint` or in 
 | `teach_claude` | `true` | Adds the diagram section to the system prompt where the mod draws pictures. |
 | `theme` | `auto` | `auto`, or one of `zinc-light`, `zinc-dark`, `tokyo-night`, `tokyo-night-storm`, `tokyo-night-light`, `catppuccin-mocha`, `catppuccin-latte`, `nord`, `nord-light`, `dracula`, `github-light`, `github-dark`, `solarized-light`, `solarized-dark`, `one-dark`. |
 | `colors` | (none) | Colors that win over the theme's, as `key=#rrggbb` pairs separated by spaces: `bg` (background), `fg` (text), `line` (edges), `accent` (arrow heads, highlights, chart series), `muted` (secondary text), `surface` (node fill), `border` (node outline). For example `accent=#7aa2f7 line=#5c6370`. |
-| `box_colors` | `true` | Gives each box its own outline color from the theme, with a light fill of that color. `false` keeps the theme's single box color. A box given its own `style` in the diagram keeps it. |
+| `box_colors` | `true` | Gives each box its own outline color from the theme, with a light fill of that color: one per period in a timeline, and one per branch from the root in a mindmap. `false` keeps the theme's single box color. A box given its own `style` in the diagram keeps it. |
 | `font` | `auto` | The label font: `auto` is Helvetica Neue on macOS and DejaVu Sans, Noto Sans or Liberation Sans on Linux; or the family name of a font installed on your machine. Hangul and other CJK text falls back to a system font that has it. |
 | `text_scale` | `1` | Label size relative to your terminal's text. |
 | `node_path` | `node` | The Node.js executable that runs the renderer. |
