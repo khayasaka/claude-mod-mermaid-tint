@@ -6016,11 +6016,11 @@ function parseMindmapDiagram(lines) {
   let headerDepth = -1;
   for (const line of lines) {
     const trimmed = line.trim();
-    if (/^mindmap(?:\s|$)/i.test(trimmed)) {
+    if (nodes.length === 0 && headerDepth < 0 && /^mindmap(?:\s|$)/i.test(trimmed)) {
       headerDepth = line.length - line.trimStart().length;
       continue;
     }
-    const titleMatch = trimmed.match(/^title\s+(.+)$/);
+    const titleMatch = nodes.length === 0 ? trimmed.match(/^title\s+(.+)$/) : null;
     if (titleMatch) {
       title = titleMatch[1].trim();
       continue;
@@ -9643,7 +9643,12 @@ var PIE = {
   legendGap: 40,
   legendSwatch: 14,
   legendRowH: 24,
+  /** The label column's least width; a longer label widens it. */
   labelColW: 150,
+  /** Space between the swatch and its label. */
+  swatchGap: 10,
+  /** Space kept between the longest label and the value column. */
+  labelValueGap: 16,
   valueColW: 70,
   pctColW: 46
 };
@@ -9653,11 +9658,13 @@ function layoutPieDiagram(diagram, _options = {}) {
   const hasTitle = !!diagram.title;
   const titleH = hasTitle ? PIE.titleGap : 0;
   const diameter = PIE.outerRadius * 2;
+  const longestLabel = Math.max(0, ...diagram.slices.map((s) => estimateTextWidth(s.label, FONT_SIZES.nodeLabel, FONT_WEIGHTS.nodeLabel)));
+  const labelColW = Math.max(PIE.labelColW, PIE.legendSwatch + PIE.swatchGap + longestLabel + PIE.labelValueGap);
   const legendLeft = PIE.padding + diameter + PIE.legendGap;
-  const labelEndX = legendLeft + PIE.labelColW;
+  const labelEndX = legendLeft + labelColW;
   const valueEndX = labelEndX + PIE.valueColW;
   const pctEndX = valueEndX + PIE.pctColW;
-  const legendWidth = PIE.legendGap + PIE.labelColW + PIE.valueColW + PIE.pctColW + PIE.padding;
+  const legendWidth = PIE.legendGap + labelColW + PIE.valueColW + PIE.pctColW + PIE.padding;
   const width = PIE.padding + diameter + legendWidth;
   const height = PIE.padding + titleH + diameter + PIE.padding;
   const cx = PIE.padding + PIE.outerRadius;
@@ -9684,7 +9691,7 @@ function layoutPieDiagram(diagram, _options = {}) {
     value: s.value,
     percent: s.percent,
     swatchX: legendLeft,
-    labelX: legendLeft + PIE.legendSwatch + 10,
+    labelX: legendLeft + PIE.legendSwatch + PIE.swatchGap,
     valueX: valueEndX,
     pctX: pctEndX,
     y: cy + (i - slices.length / 2) * PIE.legendRowH,

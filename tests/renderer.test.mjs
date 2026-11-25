@@ -181,7 +181,8 @@ test('a picture is a PNG of whole cells; an unsupported diagram fails', () => {
 const NEW_KINDS = {
   pie: 'pie title ペットの数\n  "犬" : 386\n  "猫" : 85',
   timeline: 'timeline\n  title 開発の流れ\n  2026-10 : mod を作る\n  2026-11 : 公開する : 0.6.2 を出す',
-  mindmap: 'mindmap\n  root((mermaid-tint))\n    画像\n      kitty graphics\n    罫線\n      全角対応',
+  // A child named "mindmap" once read as the header again and failed the whole diagram
+  mindmap: 'mindmap\n  root((mermaid-tint))\n    描ける図\n      pie\n      mindmap\n    罫線\n      全角対応',
 }
 
 test('pie, timeline and mindmap are drawn both as pictures and as box drawing', () => {

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.7.2
+
+- Updates the bundled beautiful-mermaid to commit `f8f3019` of the fork, which fixes two things in the new kinds:
+  - A pie chart's legend widens its label column to the longest label, so a long label no longer runs into its value.
+  - A mindmap with a node named `mindmap` (or starting with `title`) below the root is drawn: the node was read as the diagram's header, and the whole diagram stayed code.
+
 ## 0.7.1
 
 - Fixes 0.7.0, which drew no diagrams once installed: Claude Code installs a plugin's packages only from the npm registry, so it skipped all of them when beautiful-mermaid came from the fork on GitHub. beautiful-mermaid, built from the same commit of the fork, is now bundled in `vendor/beautiful-mermaid` with its license, and its own dependencies, `elkjs` and `entities`, are installed from npm.
