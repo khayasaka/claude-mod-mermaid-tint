@@ -39,15 +39,21 @@ const PADDING = 8
 const CARD_PADDING = 20
 const COLOR_KEYS = ['bg', 'fg', 'line', 'accent', 'muted', 'surface', 'border']
 
-// Scripts the label font may lack: Hangul, kana, Han and the rest of CJK.
-const WIDE_SCRIPT = /[ᄀ-ᇿ⺀-鿿가-힯豈-﫿＀-￯]/
+// Scripts the label font may lack: Hangul, kana, Han and the rest of CJK,
+// including the ideographs beyond the BMP.
+const WIDE_SCRIPT = /[ᄀ-ᇿ⺀-鿿가-힯豈-﫿＀-￯\u{20000}-\u{3fffd}]/u
+
+// The emoji and symbols from U+2300 to U+2BFF that Unicode's East Asian Width
+// marks Wide (✅, ⌛, ☕, ⭐ and the like). The rest of that range, ★ and ○
+// among them, is one cell.
+const WIDE_SYMBOL = /[⌚⌛〈〉⏩-⏬⏰⏳◽◾☔☕☰-☷♈-♓♿⚊-⚏⚓⚡⚪⚫⚽⚾⛄⛅⛎⛔⛪⛲⛳⛵⛺⛽✅✊✋✨❌❎❓-❕❗➕-➗➰➿⬛⬜⭐⭕]/
 
 // Combining marks, which the terminal draws over the letter before them in
 // no cell of their own: accents, and the arrow of a vector.
 const COMBINING = /[\u0300-\u036f\u1ab0-\u1aff\u1dc0-\u1dff\u20d0-\u20ff\ufe20-\ufe2f]+/g
 
-// Terminal cells a line of text takes: Hangul, CJK and emoji take two,
-// combining marks none.
+// Terminal cells a line of text takes: Hangul, CJK (the ideographs beyond the
+// BMP too) and emoji take two, combining marks none.
 export function cellWidth(text) {
   let width = 0
   for (const ch of text) {
@@ -61,7 +67,9 @@ export function cellWidth(text) {
       (c >= 0xfe30 && c <= 0xfe4f) ||
       (c >= 0xff00 && c <= 0xff60) ||
       (c >= 0xffe0 && c <= 0xffe6) ||
-      (c >= 0x1f300 && c <= 0x1faff)
+      (c >= 0x1f300 && c <= 0x1faff) ||
+      (c >= 0x20000 && c <= 0x3fffd) ||
+      WIDE_SYMBOL.test(ch)
     width += wide ? 2 : 1
   }
   return width
@@ -246,8 +254,59 @@ function fillCells(art) {
   return out + ' '.repeat(owed)
 }
 
+// Letters of one cell and one UTF-16 unit, from scripts a diagram rarely holds
+// (Canadian syllabics, Ethiopic, Vai): stand-ins for two-cell letters. They are
+// letters, as the state diagram parser takes only letters in a state's name.
+const STAND_INS = [[0x1401, 0x166c], [0x1200, 0x135a], [0xa500, 0xa60b]].flatMap(([from, to]) =>
+  Array.from({ length: to - from + 1 }, (_, i) => String.fromCharCode(from + i)).filter(ch => /\p{Lo}/u.test(ch)),
+)
+
+// The same counting gives a two-cell letter in the BMP, such as 開, one cell,
+// so the box lines after it land a column short. Each two-cell letter goes in
+// as two stand-ins of one cell each, and comes back once the text is laid
+// out. A stand-in the source already holds is not used, so its own letters
+// stay as they are.
+function holdWide(source) {
+  const present = new Set(source)
+  const free = STAND_INS.filter(ch => !present.has(ch))
+  const stand = new Map()
+  let out = ''
+  for (const ch of source) {
+    if (cellWidth(ch) !== 2) {
+      out += ch
+      continue
+    }
+    if (!stand.has(ch)) {
+      // More distinct two-cell letters than stand-ins: draw as before
+      if (stand.size === free.length) return undefined
+      stand.set(ch, free[stand.size])
+    }
+    out += stand.get(ch).repeat(2)
+  }
+  return { source: out, stand }
+}
+
+// The laid-out text with each pair put back as its letter, or undefined where
+// the layout split a pair (a label cut short, say).
+function restoreWide(art, stand) {
+  let out = art
+  for (const [ch, held] of stand) out = out.replaceAll(held + held, ch)
+  for (const held of stand.values()) if (out.includes(held)) return undefined
+  return out
+}
+
+function boxDrawing(source) {
+  const held = holdWide(source)
+  if (held !== undefined && held.stand.size > 0) {
+    const art = restoreWide(renderMermaidASCII(held.source, { colorMode: 'none' }), held.stand)
+    // A blank drawing means the stand-ins broke the source somewhere the parser reads: draw as before
+    if (art !== undefined && art.trim() !== '') return art
+  }
+  return renderMermaidASCII(source, { colorMode: 'none' })
+}
+
 export function renderText(item) {
-  const art = fillCells(renderMermaidASCII(withMath(item.source, item.math), { colorMode: 'none' })).replace(/\s+$/g, '')
+  const art = fillCells(boxDrawing(withMath(item.source, item.math))).replace(/\s+$/g, '')
   const lines = art.split('\n').map(line => line.replace(/\s+$/, ''))
   const columns = Math.max(0, ...lines.map(cellWidth))
   if (columns === 0) throw new Error('nothing to draw')

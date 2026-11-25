@@ -21,6 +21,7 @@ It is a fork of [dazebug/mermaid-inline](https://github.com/dazebug/mermaid-inli
 - **Edges and arrow heads drawn right**
   - Small steps (under 8 px) that could appear in an edge just before its arrow head are removed.
   - Arrow heads are rewritten in a form resvg can read. In mermaid-inline, class diagram arrows pointed right even on downward edges, inheritance triangles, aggregation and composition diamonds and the start of `<-->` edges were missing, and leftward messages in sequence diagrams pointed right.
+- **Box drawing stays in its columns with CJK labels**: letters that take two cells in the terminal, such as Chinese, Japanese and Korean script and wide emoji, are laid out as two cells. In mermaid-inline, the box lines after them landed a column short.
 - **Tells you when packages are missing**: when the renderer's npm packages can't be found, Claude is told on the next prompt, and `/mermaid-tint` shows it.
 
 ## Requirements
@@ -148,6 +149,8 @@ Where pictures can't be shown, each diagram is drawn with Unicode box drawing, b
 ```
 
 A drawing wider than the terminal can't be shrunk, so that diagram stays a code block. Box colors are not drawn in box drawing.
+
+Letters that take two cells in the terminal (Chinese, Japanese and Korean script, fullwidth forms and wide emoji, by Unicode's East Asian Width) are given two cells, so the box lines after them stay in their columns. Ambiguous-width symbols such as ○ and ★ are given one cell, so in a terminal set to draw them two cells wide, the lines after them still land a column off.
 
 ## Privacy
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.2
+
+- Keeps box drawing in its columns where labels hold Chinese, Japanese or Korean script, fullwidth forms or wide emoji. beautiful-mermaid's text renderer gave these letters one cell where the terminal draws two, so the box lines after them landed a column short. Each such letter is now laid out as two one-cell stand-ins and put back afterwards.
+- Counts more letters as two cells wide: the ideographs beyond the BMP (U+20000 to U+3FFFD, such as 𠮷) and the emoji and symbols from U+2300 to U+2BFF that Unicode's East Asian Width marks Wide (✅, ⌛, ☕, ⭐ and the like). This also sizes pictures and box drawing that hold them correctly, and uses the CJK fonts for labels with those ideographs.
+
 ## 0.6.1
 
 - Joins the cache folder with the separator its base folder already uses, so on Windows `/mermaid-tint` shows `C:\...\scratchpad\mermaid-tint\v2` instead of mixing `\` and `/`.

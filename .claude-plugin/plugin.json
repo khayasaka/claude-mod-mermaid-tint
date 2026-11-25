@@ -1,7 +1,7 @@
 {
   "name": "mermaid-tint",
   "displayName": "Mermaid Tint",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "types": "./types/index.d.ts",
   "description": "Draws the Mermaid diagrams in Claude's replies, with a color for each box: as pictures in Ghostty, cmux, kitty and gooztty (Windows), and as Unicode box drawing in other terminals. A fork of dazebug/mermaid-inline 0.1.3",
   "author": {

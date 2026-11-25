@@ -70,6 +70,42 @@ test('Hangul and CJK take two cells', () => {
   assert.equal(cellWidth('요청'), 4)
 })
 
+test('ideographs beyond the BMP and wide emoji below U+1F300 take two cells', () => {
+  assert.equal(cellWidth('𠮷'), 2)
+  assert.equal(cellWidth(String.fromCodePoint(0x3134a)), 2)
+  assert.equal(cellWidth('✅⌛☕⭐'), 8)
+  assert.equal(cellWidth('〈〉'), 4)
+  // Halfwidth katakana and ambiguous-width symbols stay one cell
+  assert.equal(cellWidth('ｱ★○'), 3)
+})
+
+test('box drawing keeps its columns where labels hold two-cell letters', () => {
+  const art = renderText({ key: 'k', source: 'graph LR\n  A[開始] --> B[保存する]\n  B --> C[中文]\n  C --> D[한국어]\n  D --> E[𠮷野家 ✅]', kind: 'text', maxColumns: 120 })
+  const widths = art.text.split('\n').map(cellWidth)
+  assert.deepEqual(widths, widths.map(() => art.columns), art.text)
+  assert.match(art.text, /開始/)
+  assert.match(art.text, /𠮷野家 ✅/)
+})
+
+test('two-cell letters keep their columns in a sequence diagram, and private-use letters in a label stay', () => {
+  const icon = ''
+  const art = renderText({ key: 'k', source: `sequenceDiagram\n  せんぱい->>まゆ: 図を描いて ${icon}\n  まゆ-->>せんぱい: 描きました`, kind: 'text', maxColumns: 120 })
+  const lines = art.text.split('\n')
+  // The row of participant names ends in the same column as the boxes' top border
+  assert.equal(cellWidth(lines[1]), cellWidth(lines[0]), art.text)
+  assert.ok(lines[1].includes('│ せんぱい │'), art.text)
+  assert.ok(art.text.includes(icon), art.text)
+})
+
+test('two-cell letters keep their columns in a state name, and a stand-in letter the source holds stays', () => {
+  const art = renderText({ key: 'k', source: 'stateDiagram-v2\n  [*] --> 待機\n  待機 --> ᐁ実行中\n  ᐁ実行中 --> [*]', kind: 'text', maxColumns: 120 })
+  const lines = art.text.split('\n')
+  const label = lines.findIndex(line => line.includes('待機'))
+  assert.ok(label > 0, art.text)
+  assert.equal(cellWidth(lines[label]), cellWidth(lines[label - 1]), art.text)
+  assert.ok(art.text.includes('ᐁ実行中'), art.text)
+})
+
 test('a combining mark, an accent or an arrow over a letter, takes no cell', () => {
   assert.equal(cellWidth('x\u0304 = y\u0302'), 5)
   assert.equal(cellWidth('v\u20d7'), 1)
