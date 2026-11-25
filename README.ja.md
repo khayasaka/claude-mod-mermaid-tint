@@ -252,8 +252,8 @@ Mermaid Tint は、データを集めず、マシンの外に何も送りませ�
 - **ネットワーク**：動いている間は使いません。
   beautiful-mermaid は SVG にウェブフォントの `@import` を書きますが、描く前に取り除きます。
   resvg にはマシンの中のフォントのファイルを渡し、何も取りに行きません。
-  plugin を入れるときに、Claude Code が `package-lock.json` で固定したパッケージ（`beautiful-mermaid`・`@resvg/resvg-js` と、その依存）をダウンロードします。
-  beautiful-mermaid は GitHub の fork [khayasaka/beautiful-mermaid](https://github.com/khayasaka/beautiful-mermaid/tree/mermaid-tint) のコミットから、ほかは npm から取得します。
+  plugin を入れるときに、Claude Code が `package-lock.json` で固定した npm のパッケージ（`@resvg/resvg-js`・`elkjs`・`entities` と、その依存）をダウンロードします。
+  beautiful-mermaid は、fork の [khayasaka/beautiful-mermaid](https://github.com/khayasaka/beautiful-mermaid/tree/mermaid-tint) でビルドしたものを `vendor/beautiful-mermaid` に同梱しています。
 - **送るもの**：マシンの外には何も送りません。
   図のコードはマシンの中の `node` に標準入力で渡し、画像はファイルとして返ってきます。
 - **認証情報**：何も読みません。
@@ -322,4 +322,4 @@ clone したフォルダーを、`claude --plugin-dir ./claude-mod-mermaid-tint`
 
 MIT です。[LICENSE](LICENSE) を見てください。
 描画用のパッケージは、それぞれのライセンスに従います。
-beautiful-mermaid（MIT）、elkjs（EPL-2.0）、entities（BSD-2-Clause）、resvg-js（MPL-2.0）です。
+beautiful-mermaid（MIT。ライセンスと一緒に `vendor/beautiful-mermaid` に同梱）、elkjs（EPL-2.0）、entities（BSD-2-Clause）、resvg-js（MPL-2.0）です。

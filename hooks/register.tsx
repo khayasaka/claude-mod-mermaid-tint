@@ -299,8 +299,8 @@ export const register: Register = (on, options) => {
     optionNotes = []
     if (theme !== 'auto' && !THEMES.includes(theme)) optionNotes.push(`theme "${theme}" is not one of auto, ${THEMES.join(', ')}; using auto`)
     if (parsed.rejected.length > 0) optionNotes.push(`colors ignored: ${parsed.rejected.join(' ')}`)
-    // Checks that the packages bin/render.mjs uses are installed
-    const hasPackages = await $.fs.exists(`${$.plugin.root}/node_modules/beautiful-mermaid`)
+    // Checks that the packages bin/render.mjs uses are installed (beautiful-mermaid itself is bundled in vendor/)
+    const hasPackages = await $.fs.exists(`${$.plugin.root}/node_modules/@resvg/resvg-js`)
     packagesNotice = undefined
     if (!hasPackages) {
       optionNotes.push(`node_modules is missing; run npm ci --ignore-scripts in ${$.plugin.root}`)

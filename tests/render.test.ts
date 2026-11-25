@@ -26,7 +26,7 @@ function engine(
   on('clock.every', async () => ({ value: undefined }))
   on('prompt.submit', async ($, e) => ({ text: e.text, context: e.context }))
   on('fs.exists', async ($, e) => ({
-    value: e.path.replaceAll('\\', '/').endsWith('node_modules/beautiful-mermaid') ? options.packages !== false : cached !== undefined,
+    value: e.path.replaceAll('\\', '/').endsWith('node_modules/@resvg/resvg-js') ? options.packages !== false : cached !== undefined,
   }))
   on('fs.read', async ($, e) => {
     if (e.as !== 'bytes') return { value: JSON.stringify(cached) }

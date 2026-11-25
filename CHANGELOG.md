@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.1
+
+- Fixes 0.7.0, which drew no diagrams once installed: Claude Code installs a plugin's packages only from the npm registry, so it skipped all of them when beautiful-mermaid came from the fork on GitHub. beautiful-mermaid, built from the same commit of the fork, is now bundled in `vendor/beautiful-mermaid` with its license, and its own dependencies, `elkjs` and `entities`, are installed from npm.
+- The check for missing packages looks for `@resvg/resvg-js`, as beautiful-mermaid is no longer in `node_modules`.
+
 ## 0.7.0
 
 - Draws `pie`, `timeline` and `mindmap` diagrams, as pictures and in box drawing. Their renderers come from [pull request #150](https://github.com/lukilabs/beautiful-mermaid/pull/150) to beautiful-mermaid, which isn't merged yet, so beautiful-mermaid is now installed from a pinned commit of the fork [khayasaka/beautiful-mermaid](https://github.com/khayasaka/beautiful-mermaid/tree/mermaid-tint). The fork also fixes their box drawing: a timeline no longer shows a `default:` heading and puts each event of a period on its own line, and the children of a mindmap's last branch are no longer indented one column too far.

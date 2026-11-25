@@ -172,7 +172,7 @@ Mermaid Tint collects no data and sends nothing off your machine: it has no serv
   - The label fonts it draws with
   - Your environment's `TERM`, `TERM_PROGRAM`, `KITTY_WINDOW_ID`, `TMUX`, `HOME`, `USERPROFILE`, `XDG_CACHE_HOME`, `XDG_CONFIG_HOME`, `GHOSTTY_RESOURCES_DIR`, `WINDIR` and `SystemRoot`
   - Claude Code's `theme` and `cleanupPeriodDays` settings
-- **Network**: none at run time. beautiful-mermaid writes a web font `@import` into each SVG, which the renderer removes before drawing; resvg is given local font files and fetches nothing. Claude Code downloads the packages pinned in `package-lock.json` (`beautiful-mermaid`, `@resvg/resvg-js` and their dependencies) when it installs the plugin: beautiful-mermaid from a commit of the fork [khayasaka/beautiful-mermaid](https://github.com/khayasaka/beautiful-mermaid/tree/mermaid-tint) on GitHub, the rest from npm.
+- **Network**: none at run time. beautiful-mermaid writes a web font `@import` into each SVG, which the renderer removes before drawing; resvg is given local font files and fetches nothing. Claude Code downloads the npm packages pinned in `package-lock.json` (`@resvg/resvg-js`, `elkjs`, `entities` and their dependencies) when it installs the plugin. beautiful-mermaid is bundled in `vendor/beautiful-mermaid`, built from the fork [khayasaka/beautiful-mermaid](https://github.com/khayasaka/beautiful-mermaid/tree/mermaid-tint).
 - **Sends**: nothing leaves your machine. The diagram sources go to the local `node` renderer on its standard input, and the pictures come back as files.
 - **Credentials**: none are read.
 - **Hooks**
@@ -217,4 +217,4 @@ Load your clone for one session with `claude --plugin-dir ./claude-mod-mermaid-t
 
 ## License
 
-MIT, see [LICENSE](LICENSE). The renderer's packages keep their own licenses: beautiful-mermaid (MIT), elkjs (EPL-2.0), entities (BSD-2-Clause) and resvg-js (MPL-2.0).
+MIT, see [LICENSE](LICENSE). The renderer's packages keep their own licenses: beautiful-mermaid (MIT, bundled with its license in `vendor/beautiful-mermaid`), elkjs (EPL-2.0), entities (BSD-2-Clause) and resvg-js (MPL-2.0).

@@ -15,7 +15,7 @@ import fs from 'node:fs'
 import { createRequire } from 'node:module'
 import path from 'node:path'
 
-import { THEMES, parseMermaid, renderMermaidASCII, renderMermaidSVG } from 'beautiful-mermaid'
+import { THEMES, parseMermaid, renderMermaidASCII, renderMermaidSVG } from '../vendor/beautiful-mermaid/index.mjs'
 
 import { colorBoxes } from './box-colors.mjs'
 import { resolveCss } from './css.mjs'

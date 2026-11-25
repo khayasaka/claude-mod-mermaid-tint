@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
-import { renderMermaidSVG } from 'beautiful-mermaid'
+import { renderMermaidSVG } from '../vendor/beautiful-mermaid/index.mjs'
 
 import { fixMarkerOrient } from '../bin/markers.mjs'
 
