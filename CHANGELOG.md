@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.7.0
+
+- Draws `pie`, `timeline` and `mindmap` diagrams, as pictures and in box drawing. Their renderers come from [pull request #150](https://github.com/lukilabs/beautiful-mermaid/pull/150) to beautiful-mermaid, which isn't merged yet, so beautiful-mermaid is now installed from a pinned commit of the fork [khayasaka/beautiful-mermaid](https://github.com/khayasaka/beautiful-mermaid/tree/mermaid-tint). The fork also fixes their box drawing: a timeline no longer shows a `default:` heading and puts each event of a period on its own line, and the children of a mindmap's last branch are no longer indented one column too far.
+- Leaves `quadrantChart` as code, as pictures and in box drawing alike: the same pull request draws it, but its box drawing cuts point labels to one letter.
+- In a timeline, a formula whose text holds a colon stays as TeX, since a colon divides a period's events.
+- Tells Claude it can use `pie`, `timeline` and `mindmap`.
+
 ## 0.6.2
 
 - Keeps box drawing in its columns where labels hold Chinese, Japanese or Korean script, fullwidth forms or wide emoji. beautiful-mermaid's text renderer gave these letters one cell where the terminal draws two, so the box lines after them landed a column short. Each such letter is now laid out as two one-cell stand-ins and put back afterwards.

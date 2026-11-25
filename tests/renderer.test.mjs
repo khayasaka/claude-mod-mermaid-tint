@@ -174,6 +174,52 @@ test('a picture is a PNG of whole cells; an unsupported diagram fails', () => {
   // The PNG's size is the box of cells it fills.
   assert.equal(png.readUInt32BE(16), Math.round(result.columns * (48 / 2.125)))
   assert.equal(png.readUInt32BE(20), result.rows * 48)
-  assert.throws(() => renderPicture({ key: 'q', source: 'pie title Pets\n  "Dogs" : 3', maxColumns: 80, maxRows: 40 }, request), /Invalid mermaid header/)
+  assert.throws(() => renderPicture({ key: 'q', source: 'gantt\n  title Plan', maxColumns: 80, maxRows: 40 }, request), /Invalid mermaid header/)
   fs.rmSync(outDir, { recursive: true, force: true })
+})
+
+const NEW_KINDS = {
+  pie: 'pie title ペットの数\n  "犬" : 386\n  "猫" : 85',
+  timeline: 'timeline\n  title 開発の流れ\n  2026-10 : mod を作る\n  2026-11 : 公開する : 0.6.2 を出す',
+  mindmap: 'mindmap\n  root((mermaid-tint))\n    画像\n      kitty graphics\n    罫線\n      全角対応',
+}
+
+test('pie, timeline and mindmap are drawn both as pictures and as box drawing', () => {
+  const outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'mermaid-tint-'))
+  const request = { ...JETBRAINS, outDir, theme: 'auto', overrides: {}, terminal: {}, prefersDark: true, font: 'auto' }
+  for (const [key, source] of Object.entries(NEW_KINDS)) {
+    const picture = renderPicture({ key, source, maxColumns: 80, maxRows: 40 }, request)
+    assert.equal(fs.readFileSync(picture.file).subarray(1, 4).toString(), 'PNG', key)
+    const art = renderText({ key, source, kind: 'text', maxColumns: 80 })
+    assert.ok(art.text.length > 0, key)
+  }
+  fs.rmSync(outDir, { recursive: true, force: true })
+})
+
+test("box drawing of the new kinds keeps two-cell letters in their columns, and a timeline's events stay on lines of their own", () => {
+  const pie = renderText({ key: 'p', source: NEW_KINDS.pie, kind: 'text', maxColumns: 80 }).text.split('\n')
+  const dog = pie.find(line => line.startsWith('犬'))
+  const cat = pie.find(line => line.startsWith('猫'))
+  assert.equal(cellWidth(dog.slice(0, dog.indexOf('█'))), cellWidth(cat.slice(0, cat.indexOf('█'))), pie.join('\n'))
+  const timeline = renderText({ key: 't', source: NEW_KINDS.timeline, kind: 'text', maxColumns: 80 }).text.split('\n')
+  const boxes = timeline.filter(line => line.startsWith('│'))
+  assert.deepEqual(boxes.map(cellWidth), boxes.map(() => cellWidth(boxes[0])), timeline.join('\n'))
+  assert.ok(timeline.some(line => line.includes('0.6.2 を出す') && !line.includes('公開する')), timeline.join('\n'))
+  assert.ok(!timeline.join('\n').includes('default'), timeline.join('\n'))
+})
+
+test('a quadrant chart is left as code in pictures and in box drawing alike', () => {
+  const outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'mermaid-tint-'))
+  const request = { ...JETBRAINS, outDir, theme: 'auto', overrides: {}, terminal: {}, prefersDark: true, font: 'auto' }
+  const source = 'quadrantChart\n  title Reach\n  quadrant-1 Expand\n  A: [0.3, 0.6]'
+  assert.throws(() => renderPicture({ key: 'q', source, maxColumns: 80, maxRows: 40 }, request), /left as code/)
+  assert.throws(() => renderText({ key: 'q', source, kind: 'text', maxColumns: 80 }), /left as code/)
+  fs.rmSync(outDir, { recursive: true, force: true })
+})
+
+test("a formula that turns into a colon is left as TeX in a timeline, where a colon divides events", () => {
+  const source = 'timeline\n  2026 : f $\\colon$ g'
+  const tex = '$\\colon$'
+  const out = withMath(source, spans(source, [[tex, ':']]))
+  assert.equal(out, source)
 })

@@ -36,6 +36,8 @@ Claude が ` ```mermaid ` のコードブロックを書くと、その場所に
     元は、矢印の手前で線が少し折れて見えることがありました。
   - 矢印の向きを、resvg が読める形に書き直します。
     元は、クラス図の矢印が下向きの線でも右を向き、継承の三角・集約とコンポジションのひし形・`<-->` の始点の矢印が出ず、シーケンス図の左向きの矢印が右を向いていました。
+- **描ける図が多い**：`pie`・`timeline`・`mindmap` も、画像と罫線の両方で描きます。
+  元はコードのまま残していました。
 - **日本語などのラベルでも罫線の図がずれない**：中国語・日本語・韓国語の文字や幅の広い絵文字のように、ターミナルで2マスになる文字を2マスとして配置します。
   元は、その後ろの罫線が1マス左にずれていました。
 - **パッケージが無いことを知らせる**：図を描くための npm のパッケージが見つからないときは、次のプロンプトで Claude に知らせ、`/mermaid-tint` にも表示します。
@@ -104,8 +106,10 @@ mod が自分で自分を更新することはありません。
 
 ## 描ける図
 
-フローチャート（`graph`・`flowchart`、向きはどれでも）、`sequenceDiagram`、`stateDiagram-v2`、`classDiagram`、`erDiagram`、`xychart-beta`（棒グラフと折れ線グラフ）です。
-ほかの種類（`gantt`・`pie`・`mindmap` など）や、読み取れない図は、Claude が書いたままのコードブロックで残ります。
+フローチャート（`graph`・`flowchart`、向きはどれでも）、`sequenceDiagram`、`stateDiagram-v2`、`classDiagram`、`erDiagram`、`xychart-beta`（棒グラフと折れ線グラフ）、`pie`、`timeline`、`mindmap` です。
+ほかの種類（`gantt`・`quadrantChart` など）や、読み取れない図は、Claude が書いたままのコードブロックで残ります。
+どの種類も、画像と罫線の両方で描きます。
+`quadrantChart` は、画像では描けますが罫線ではまだうまく描けないので、どちらでもコードのまま残します。
 
 図を描くのは、コードブロックが閉じていて、返信の一番上の階層か、箇条書きの項目の中にあるときです。
 箇条書きの中の図は、その項目の字下げの位置に描きます。
@@ -248,7 +252,8 @@ Mermaid Tint は、データを集めず、マシンの外に何も送りませ�
 - **ネットワーク**：動いている間は使いません。
   beautiful-mermaid は SVG にウェブフォントの `@import` を書きますが、描く前に取り除きます。
   resvg にはマシンの中のフォントのファイルを渡し、何も取りに行きません。
-  plugin を入れるときに、Claude Code が `package-lock.json` で固定した npm のパッケージ（`beautiful-mermaid`・`@resvg/resvg-js` と、その依存）をダウンロードします。
+  plugin を入れるときに、Claude Code が `package-lock.json` で固定したパッケージ（`beautiful-mermaid`・`@resvg/resvg-js` と、その依存）をダウンロードします。
+  beautiful-mermaid は GitHub の fork [khayasaka/beautiful-mermaid](https://github.com/khayasaka/beautiful-mermaid/tree/mermaid-tint) のコミットから、ほかは npm から取得します。
 - **送るもの**：マシンの外には何も送りません。
   図のコードはマシンの中の `node` に標準入力で渡し、画像はファイルとして返ってきます。
 - **認証情報**：何も読みません。
@@ -305,6 +310,8 @@ clone したフォルダーを、`claude --plugin-dir ./claude-mod-mermaid-tint`
 - 図の組み立ては、Craft の [beautiful-mermaid](https://github.com/lukilabs/beautiful-mermaid) です。
   文字の描画は Alexander Grooff の [mermaid-ascii](https://github.com/AlexanderGrooff/mermaid-ascii) が元で、配置には [ELK](https://github.com/kieler/elkjs) を使っています。
   画像にするのは [resvg](https://github.com/RazrFalcon/resvg) です。
+- 円グラフ・タイムライン・マインドマップの描画は、Daniele Rolli さんが beautiful-mermaid に出した [プルリクエスト #150](https://github.com/lukilabs/beautiful-mermaid/pull/150) のものです。
+  fork の [khayasaka/beautiful-mermaid](https://github.com/khayasaka/beautiful-mermaid/tree/mermaid-tint) で、タイムラインとマインドマップの罫線の描画を直して使っています。
 - ターミナルのセルは、[Ghostty](https://github.com/ghostty-org/ghostty)（MIT）の `src/font/Metrics.zig` と同じ方法で測ります。
   コードは [LaTeX Inline](https://github.com/dazebug/latex-inline) と共通です。
 - ラベルの数式は、LaTeX Inline の変換のコードを写した `hooks/tex.ts` で文字にします。
@@ -314,5 +321,5 @@ clone したフォルダーを、`claude --plugin-dir ./claude-mod-mermaid-tint`
 ## ライセンス
 
 MIT です。[LICENSE](LICENSE) を見てください。
-npm から入れる描画用のパッケージは、それぞれのライセンスに従います。
+描画用のパッケージは、それぞれのライセンスに従います。
 beautiful-mermaid（MIT）、elkjs（EPL-2.0）、entities（BSD-2-Clause）、resvg-js（MPL-2.0）です。

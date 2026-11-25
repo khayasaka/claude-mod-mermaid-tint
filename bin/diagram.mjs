@@ -159,8 +159,20 @@ function structureOf(source) {
 
 // Characters that are syntax in some diagram's labels: a bracket ends a
 // label or a list, a comma or a semicolon divides one, a bar or a quote
-// ends one.
+// ends one. A timeline also divides a period's events at a colon.
 const LABEL_SYNTAX = /[[\](){},;|"]/g
+const TIMELINE_SYNTAX = /[[\](){},;|":]/g
+
+// Kinds beautiful-mermaid draws but this mod leaves as code: their box
+// drawing is not good enough yet (a quadrant chart cuts point labels to one
+// letter), and a kind is drawn either in pictures and box drawing both or in
+// neither.
+const LEFT_AS_CODE = new Set(['quadrantChart'])
+
+function checkDrawn(source) {
+  const kind = kindOf(source)
+  if (LEFT_AS_CODE.has(kind)) throw new Error(`${kind} is left as code`)
+}
 
 // The word that names a diagram's kind: its first, past blank lines and
 // comments.
@@ -181,12 +193,13 @@ function kindOf(source) {
 export function withMath(source, math = []) {
   const base = structureOf(source)
   const lineLabels = base === undefined && kindOf(source) === 'sequenceDiagram'
+  const syntax = kindOf(source) === 'timeline' ? TIMELINE_SYNTAX : LABEL_SYNTAX
   let out = source
   let shift = 0
   for (const { start, end, text } of math) {
     const tex = source.slice(start, end)
     const tried = out.slice(0, start + shift) + text + out.slice(end + shift)
-    const keeps = base !== undefined ? structureOf(tried) === base : lineLabels || [...text.matchAll(LABEL_SYNTAX)].every(([ch]) => tex.includes(ch))
+    const keeps = base !== undefined ? structureOf(tried) === base : lineLabels || [...text.matchAll(syntax)].every(([ch]) => tex.includes(ch))
     if (!keeps) continue
     out = tried
     shift += text.length - (end - start)
@@ -195,6 +208,7 @@ export function withMath(source, math = []) {
 }
 
 export function renderPicture(item, request) {
+  checkDrawn(item.source)
   const { colors, card, theme } = diagramColors(request)
   const source = withMath(item.source, item.math)
   const drawn = renderMermaidSVG(source, {
@@ -306,6 +320,7 @@ function boxDrawing(source) {
 }
 
 export function renderText(item) {
+  checkDrawn(item.source)
   const art = fillCells(boxDrawing(withMath(item.source, item.math))).replace(/\s+$/g, '')
   const lines = art.split('\n').map(line => line.replace(/\s+$/, ''))
   const columns = Math.max(0, ...lines.map(cellWidth))

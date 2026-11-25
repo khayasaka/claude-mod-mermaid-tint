@@ -21,6 +21,7 @@ It is a fork of [dazebug/mermaid-inline](https://github.com/dazebug/mermaid-inli
 - **Edges and arrow heads drawn right**
   - Small steps (under 8 px) that could appear in an edge just before its arrow head are removed.
   - Arrow heads are rewritten in a form resvg can read. In mermaid-inline, class diagram arrows pointed right even on downward edges, inheritance triangles, aggregation and composition diamonds and the start of `<-->` edges were missing, and leftward messages in sequence diagrams pointed right.
+- **More kinds of diagrams**: `pie`, `timeline` and `mindmap` are drawn too, as pictures and in box drawing. mermaid-inline left them as code.
 - **Box drawing stays in its columns with CJK labels**: letters that take two cells in the terminal, such as Chinese, Japanese and Korean script and wide emoji, are laid out as two cells. In mermaid-inline, the box lines after them landed a column short.
 - **Tells you when packages are missing**: when the renderer's npm packages can't be found, Claude is told on the next prompt, and `/mermaid-tint` shows it.
 
@@ -76,7 +77,7 @@ Then restart Claude Code. The mod does not update itself.
 
 ## Diagrams it draws
 
-Flowcharts (`graph` and `flowchart`, in any direction), `sequenceDiagram`, `stateDiagram-v2`, `classDiagram`, `erDiagram` and `xychart-beta` (bar and line charts). A block of another kind, such as `gantt`, `pie` or `mindmap`, or one that doesn't parse, stays a code block, as Claude wrote it.
+Flowcharts (`graph` and `flowchart`, in any direction), `sequenceDiagram`, `stateDiagram-v2`, `classDiagram`, `erDiagram`, `xychart-beta` (bar and line charts), `pie`, `timeline` and `mindmap`. A block of another kind, such as `gantt` or `quadrantChart`, or one that doesn't parse, stays a code block, as Claude wrote it. Every kind is drawn both as a picture and in box drawing; `quadrantChart`, which the renderer draws as a picture but not yet well in box drawing, is left as code in both.
 
 A diagram is drawn when its code block is closed and stands at the top level of the reply or in a list item. One in a list item is drawn at the item's indent. One inside a block quote stays code, and so does one still streaming in, until its closing fence arrives. A diagram wider than the terminal is shrunk to fit, and one taller than the screen is shrunk toward the screen's height, its labels no smaller than 60% of their size.
 
@@ -171,7 +172,7 @@ Mermaid Tint collects no data and sends nothing off your machine: it has no serv
   - The label fonts it draws with
   - Your environment's `TERM`, `TERM_PROGRAM`, `KITTY_WINDOW_ID`, `TMUX`, `HOME`, `USERPROFILE`, `XDG_CACHE_HOME`, `XDG_CONFIG_HOME`, `GHOSTTY_RESOURCES_DIR`, `WINDIR` and `SystemRoot`
   - Claude Code's `theme` and `cleanupPeriodDays` settings
-- **Network**: none at run time. beautiful-mermaid writes a web font `@import` into each SVG, which the renderer removes before drawing; resvg is given local font files and fetches nothing. Claude Code downloads the npm packages pinned in `package-lock.json` (`beautiful-mermaid`, `@resvg/resvg-js` and their dependencies) when it installs the plugin.
+- **Network**: none at run time. beautiful-mermaid writes a web font `@import` into each SVG, which the renderer removes before drawing; resvg is given local font files and fetches nothing. Claude Code downloads the packages pinned in `package-lock.json` (`beautiful-mermaid`, `@resvg/resvg-js` and their dependencies) when it installs the plugin: beautiful-mermaid from a commit of the fork [khayasaka/beautiful-mermaid](https://github.com/khayasaka/beautiful-mermaid/tree/mermaid-tint) on GitHub, the rest from npm.
 - **Sends**: nothing leaves your machine. The diagram sources go to the local `node` renderer on its standard input, and the pictures come back as files.
 - **Credentials**: none are read.
 - **Hooks**
@@ -208,7 +209,7 @@ Load your clone for one session with `claude --plugin-dir ./claude-mod-mermaid-t
 ## Acknowledgements
 
 - Forked from dazebug's [mermaid-inline](https://github.com/dazebug/mermaid-inline).
-- Diagrams are laid out by [beautiful-mermaid](https://github.com/lukilabs/beautiful-mermaid) from Craft, whose text renderer is based on Alexander Grooff's [mermaid-ascii](https://github.com/AlexanderGrooff/mermaid-ascii), with [ELK](https://github.com/kieler/elkjs) for layout, and rasterized by [resvg](https://github.com/RazrFalcon/resvg).
+- Diagrams are laid out by [beautiful-mermaid](https://github.com/lukilabs/beautiful-mermaid) from Craft, whose text renderer is based on Alexander Grooff's [mermaid-ascii](https://github.com/AlexanderGrooff/mermaid-ascii), with [ELK](https://github.com/kieler/elkjs) for layout, and rasterized by [resvg](https://github.com/RazrFalcon/resvg). The pie, timeline and mindmap renderers come from Daniele Rolli's [pull request #150](https://github.com/lukilabs/beautiful-mermaid/pull/150) to beautiful-mermaid, which the fork [khayasaka/beautiful-mermaid](https://github.com/khayasaka/beautiful-mermaid/tree/mermaid-tint) builds on with fixes to the timeline and mindmap box drawing.
 - The terminal cell is measured the way [Ghostty](https://github.com/ghostty-org/ghostty) (MIT) computes it in `src/font/Metrics.zig`, with code shared with [LaTeX Inline](https://github.com/dazebug/latex-inline).
 - Math in labels is turned into Unicode text by a copy of LaTeX Inline's converter, `hooks/tex.ts`.
 - The cache file names come from [cyrb53](https://github.com/bryc/code/blob/master/jshash/experimental/cyrb53.js), bryc's public-domain string hash.
@@ -216,4 +217,4 @@ Load your clone for one session with `claude --plugin-dir ./claude-mod-mermaid-t
 
 ## License
 
-MIT, see [LICENSE](LICENSE). The renderer's packages, installed from npm, keep their own licenses: beautiful-mermaid (MIT), elkjs (EPL-2.0), entities (BSD-2-Clause) and resvg-js (MPL-2.0).
+MIT, see [LICENSE](LICENSE). The renderer's packages keep their own licenses: beautiful-mermaid (MIT), elkjs (EPL-2.0), entities (BSD-2-Clause) and resvg-js (MPL-2.0).

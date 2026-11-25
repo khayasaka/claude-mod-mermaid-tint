@@ -39,7 +39,7 @@ const DIAGRAM_INSTRUCTION = [
   '# Diagrams in replies',
   'This terminal draws Mermaid diagrams in your replies as pictures (the mermaid-tint plugin renders them).',
   'When a diagram explains something better than prose would (an architecture, a flow of data or control, a state machine, the calls between components, a class or entity model), write it as a fenced code block with the language mermaid, on its own at the top level of the reply rather than inside a list item.',
-  'Use flowchart (graph TD or graph LR), sequenceDiagram, stateDiagram-v2, classDiagram, erDiagram or xychart-beta; other kinds are shown as code. Write node ids in ASCII letters and digits; labels may be in any language.',
+  'Use flowchart (graph TD or graph LR), sequenceDiagram, stateDiagram-v2, classDiagram, erDiagram, xychart-beta, pie, timeline or mindmap; other kinds are shown as code. Write node ids in ASCII letters and digits; labels may be in any language.',
   'Keep a diagram small enough to read in a terminal: about 12 nodes at most, each label a few words on one line (no <br/>), a decision a short question, details in the text around it. Prefer graph TD for long chains, which grow wide in graph LR.',
 ].join('\n')
 
