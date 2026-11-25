@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.3
+
+- Draws again the diagrams cached by 0.6.1 to 0.7.2. The cache key's revision wasn't raised in 0.6.2 to 0.7.2, so a diagram drawn before kept its old drawing: box drawing with CJK labels a column off, and a `pie`, `timeline` or `mindmap` block that failed before stayed code.
+
 ## 0.7.2
 
 - Updates the bundled beautiful-mermaid to commit `f8f3019` of the fork, which fixes two things in the new kinds:
