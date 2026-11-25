@@ -8,9 +8,9 @@ import type { MermaidTintStateKey } from '../types'
 
 // Part of every cache key: bump it when bin/render.mjs draws differently.
 const VERSION = 2
-// A revision that only goes into the cache key, raised when a change draws diagrams differently with the same options (1: edge steps removed, 2: arrow heads turned, 3: two-cell letters in box drawing, and pie, timeline and mindmap drawn instead of kept as errors, 4: box colors for timeline periods and mindmap branches).
+// A revision that only goes into the cache key, raised when a change draws diagrams differently with the same options (1: edge steps removed, 2: arrow heads turned, 3: two-cell letters in box drawing, and pie, timeline and mindmap drawn instead of kept as errors, 4: box colors for timeline periods and mindmap branches, 5: wider padding in timeline boxes).
 // It is kept apart from VERSION: raising VERSION renames the cache folder (v2), and pruneFallback would stop finding the old pictures in the fallback folder
-const LOCAL_REVISION = 4
+const LOCAL_REVISION = 5
 // Pixels per terminal row in the pictures; the terminal scales each picture
 // to its cells, so this only sets how sharp they are.
 const ROW_PX = 48

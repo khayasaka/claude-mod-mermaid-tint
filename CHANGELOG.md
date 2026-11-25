@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.1
+
+- Gives a timeline's boxes as much padding on each side as a flowchart's (20 px, up from 14), from commit `66b3272` of the fork. A long label drawn in a font a little wider than beautiful-mermaid's estimate, such as BIZ UDPGothic, no longer reaches the edges of its box.
+
 ## 0.8.0
 
 - Box colors for timelines and mindmaps: each period of a timeline takes one color for its box and its events, and each branch from a mindmap's root takes one color for all its nodes. The root keeps the accent color, and the branches start from the theme's second box color, since the first is often the accent's hue. A vertical timeline (`timeline TD`), drawn with dots rather than boxes, isn't colored.
