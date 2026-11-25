@@ -292,6 +292,11 @@ export function findFontFile(family, dirs) {
   return fallback
 }
 
+// The system font folder on Windows, where the fonts that come with Windows are.
+export function windowsFontDir() {
+  return path.join(process.env.WINDIR || process.env.SystemRoot || 'C:\\Windows', 'Fonts')
+}
+
 export function fontDirs(home, platform) {
   if (platform === 'darwin') {
     return [path.join(home, 'Library/Fonts'), '/Library/Fonts', '/System/Library/Fonts', '/System/Library/Fonts/Supplemental']
@@ -299,11 +304,10 @@ export function fontDirs(home, platform) {
   // On Windows, look in the user's and the system's font folders directly.
   // ~/.local/share/fonts stays first, so fonts copied there earlier are still used.
   if (platform === 'win32') {
-    const windir = process.env.WINDIR || process.env.SystemRoot || 'C:\\Windows'
     return [
       path.join(home, '.local/share/fonts'),
       path.join(home, 'AppData/Local/Microsoft/Windows/Fonts'),
-      path.join(windir, 'Fonts'),
+      windowsFontDir(),
     ]
   }
   return [path.join(home, '.local/share/fonts'), path.join(home, '.fonts'), '/usr/local/share/fonts', '/usr/share/fonts']

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.2
+
+- Draws labels on Windows with `font` set to `auto`, the default. The mod gave the renderer no font there, since its default fonts were looked up only in the macOS and Linux folders, so pictures came out with no text. It now uses Segoe UI (or Arial) for labels and Consolas for class members, and falls back to Yu Gothic, Malgun Gothic and Microsoft YaHei for CJK text, so a font without those characters, such as Consolas, no longer leaves them out. Pictures drawn before are drawn again.
+
 ## 0.8.1
 
 - Gives a timeline's boxes as much padding on each side as a flowchart's (20 px, up from 14), from commit `66b3272` of the fork. A long label drawn in a font a little wider than beautiful-mermaid's estimate, such as BIZ UDPGothic, no longer reaches the edges of its box.

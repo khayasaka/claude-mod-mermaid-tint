@@ -14,6 +14,7 @@ It is a fork of [dazebug/mermaid-inline](https://github.com/dazebug/mermaid-inli
 
 - **Works on Windows**
   - Label fonts are also looked up in the Windows font folders (`~\AppData\Local\Microsoft\Windows\Fonts` and `%WINDIR%\Fonts`). mermaid-inline looked only in the macOS and Linux folders.
+  - With `font` set to `auto`, labels are drawn in Segoe UI, with Yu Gothic, Malgun Gothic and Microsoft YaHei for CJK text. mermaid-inline had no default font on Windows, so labels weren't drawn.
   - On Windows without `HOME`, `USERPROFILE` is used as the home folder.
 - **Draws in a Windows terminal when Claude Code runs in WSL**: diagram pictures are passed as data rather than as file paths. mermaid-inline passed paths, which a Windows terminal can't open in WSL, so it drew empty frames. Pictures over 2 MiB are still passed as paths.
 - **A color for each box**: each box of a flowchart, state, sequence, class or ER diagram gets its own outline color from the theme, with a light fill of that color. A timeline's period shares its color with its events, and a mindmap's nodes share the color of their branch from the root. Set `box_colors` to `false` for the theme's single box color, as in mermaid-inline.
@@ -72,7 +73,6 @@ Then restart Claude Code. The mod does not update itself.
   - Start Claude Code with the environment variable `CLAUDE_CODE_FORCE_TERMINAL_IMAGES=1`.
 
   In a terminal that can't show pictures, such as Windows Terminal, either one leaves empty frames where the diagrams should be. Set them only in gooztty, for example in your PowerShell profile when `$Env:TERM_PROGRAM -eq 'gooztty'`.
-- **Font**: on Windows, `font` set to `auto` finds no default font. Set `font` to the name of an installed font, such as `Segoe UI`, `BIZ UDPGothic` or `Yu Gothic UI`. Labels in Japanese and other CJK scripts need a font that has those characters.
 - **WSL**: to run Claude Code in WSL inside gooztty, add `TERM_PROGRAM/u` to `WSLENV`, so the Windows variable `TERM_PROGRAM` reaches WSL. On Linux, install `fonts-noto-cjk` or similar for CJK labels.
 
 ## Diagrams it draws
@@ -106,7 +106,7 @@ Set options with `/plugin configure mermaid-tint@claude-mod-mermaid-tint` or in 
 | `theme` | `auto` | `auto`, or one of `zinc-light`, `zinc-dark`, `tokyo-night`, `tokyo-night-storm`, `tokyo-night-light`, `catppuccin-mocha`, `catppuccin-latte`, `nord`, `nord-light`, `dracula`, `github-light`, `github-dark`, `solarized-light`, `solarized-dark`, `one-dark`. |
 | `colors` | (none) | Colors that win over the theme's, as `key=#rrggbb` pairs separated by spaces: `bg` (background), `fg` (text), `line` (edges), `accent` (arrow heads, highlights, chart series), `muted` (secondary text), `surface` (node fill), `border` (node outline). For example `accent=#7aa2f7 line=#5c6370`. |
 | `box_colors` | `true` | Gives each box its own outline color from the theme, with a light fill of that color: one per period in a timeline, and one per branch from the root in a mindmap. `false` keeps the theme's single box color. A box given its own `style` in the diagram keeps it. |
-| `font` | `auto` | The label font: `auto` is Helvetica Neue on macOS and DejaVu Sans, Noto Sans or Liberation Sans on Linux; or the family name of a font installed on your machine. Hangul and other CJK text falls back to a system font that has it. |
+| `font` | `auto` | The label font: `auto` is Helvetica Neue on macOS, DejaVu Sans, Noto Sans or Liberation Sans on Linux, and Segoe UI on Windows; or the family name of a font installed on your machine. Hangul and other CJK text falls back to a system font that has it. A label with a character its font lacks is drawn wholly in that fallback font. |
 | `text_scale` | `1` | Label size relative to your terminal's text. |
 | `node_path` | `node` | The Node.js executable that runs the renderer. |
 | `font_metrics` | `auto` | `auto` measures your terminal font at session start (below). `manual` always uses the next two options. |

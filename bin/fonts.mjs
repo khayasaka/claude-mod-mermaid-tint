@@ -6,7 +6,10 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 
-import { facesOf, findFontFile, fontDirs } from './font-metrics.mjs'
+import { facesOf, findFontFile, fontDirs, windowsFontDir } from './font-metrics.mjs'
+
+// Fonts that come with Windows, in the system font folder.
+const WINDOWS = name => path.join(windowsFontDir(), name)
 
 // Candidates in order of preference: [file, family]. A family left out is
 // read from the file. Helvetica Neue comes before San Francisco on macOS
@@ -24,6 +27,8 @@ const SANS = [
   ['/usr/share/fonts/noto/NotoSans-Regular.ttf', 'Noto Sans'],
   ['/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf', 'Liberation Sans'],
   ['/usr/share/fonts/liberation/LiberationSans-Regular.ttf', 'Liberation Sans'],
+  [WINDOWS('segoeui.ttf'), 'Segoe UI'],
+  [WINDOWS('arial.ttf'), 'Arial'],
 ]
 const MONO = [
   ['/System/Library/Fonts/Menlo.ttc', 'Menlo'],
@@ -32,6 +37,7 @@ const MONO = [
   ['/usr/share/fonts/TTF/DejaVuSansMono.ttf', 'DejaVu Sans Mono'],
   ['/usr/share/fonts/dejavu/DejaVuSansMono.ttf', 'DejaVu Sans Mono'],
   ['/usr/share/fonts/truetype/liberation/LiberationMono-Regular.ttf', 'Liberation Mono'],
+  [WINDOWS('consola.ttf'), 'Consolas'],
 ]
 const FALLBACKS = [
   ['/System/Library/Fonts/AppleSDGothicNeo.ttc', 'Apple SD Gothic Neo'],
@@ -39,6 +45,13 @@ const FALLBACKS = [
   ['/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc', 'Noto Sans CJK KR'],
   ['/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc', 'Noto Sans CJK KR'],
   ['/usr/share/fonts/google-noto-cjk/NotoSansCJK-Regular.ttc', 'Noto Sans CJK KR'],
+  // Windows splits the CJK scripts across fonts: Yu Gothic has kana and Han,
+  // Malgun Gothic Hangul, and Microsoft YaHei the Han characters Yu Gothic
+  // lacks. The family is named here because the names in YuGoth*.ttc aren't
+  // read correctly by facesOf. The medium face matches the labels' weight.
+  [WINDOWS('YuGothM.ttc'), 'Yu Gothic'],
+  [WINDOWS('malgun.ttf'), 'Malgun Gothic'],
+  [WINDOWS('msyh.ttc'), 'Microsoft YaHei'],
 ]
 
 function firstExisting(candidates) {
