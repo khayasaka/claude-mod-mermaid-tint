@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-Only the latest release receives fixes. Update an installed copy with `claude plugin update mermaid-inline@mermaid-inline`.
+Only the latest release receives fixes. Update an installed copy with `claude plugin update mermaid-tint@claude-mod-mermaid-tint`.
 
 ## Reporting a vulnerability
 

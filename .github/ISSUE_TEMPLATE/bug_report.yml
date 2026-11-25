@@ -19,6 +19,6 @@ body:
     id: setup
     attributes:
       label: Setup
-      description: The output of `claude --version`, the plugin version from `claude plugin list`, your terminal and whether it runs inside tmux, and what `/mermaid-inline` prints.
+      description: The output of `claude --version`, the plugin version from `claude plugin list`, your terminal and whether it runs inside tmux, and what `/mermaid-tint` prints.
     validations:
       required: true

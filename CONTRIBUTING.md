@@ -1,6 +1,6 @@
 # Contributing
 
-Bug reports, fixes and ideas are welcome.
+Bug reports and ideas are welcome. Pull requests are welcome too, but this is maintained in spare time, so replies and reviews may take a while.
 
 ## Reporting a problem
 
@@ -16,8 +16,4 @@ Open an issue with the bug report form, and include a screenshot when something 
    - `claude plugin validate --strict .claude-plugin/plugin.json`
    - `npx -p typescript@5 tsc --noEmit`
 
-## Pull requests
-
-- `main` is protected: every change goes in through a pull request, and pull requests are merged by squash.
-- Keep a pull request to one change. Add a test that fails without the change, and update the README when users will notice it.
-- The maintainer bumps the version in `.claude-plugin/plugin.json` and tags releases.
+Keep a pull request to one change, add a test that fails without it, and update both READMEs (`README.md` and `README.ja.md`) when users will notice it. A README change in English alone is fine; the Japanese one can follow.

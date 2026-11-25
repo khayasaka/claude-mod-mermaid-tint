@@ -5,5 +5,6 @@
 ## Checks
 
 - [ ] `claude plugin test` passes
+- [ ] `node --test tests/*.test.mjs` passes
 - [ ] `claude plugin validate --strict .claude-plugin/plugin.json` passes
 - [ ] The README describes the change, if users will notice it
