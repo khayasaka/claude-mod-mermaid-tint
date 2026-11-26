@@ -80,6 +80,10 @@ Then restart Claude Code. The mod does not update itself.
 
 Flowcharts (`graph` and `flowchart`, in any direction), `sequenceDiagram`, `stateDiagram-v2`, `classDiagram`, `erDiagram`, `xychart-beta` (bar and line charts), `pie`, `timeline` and `mindmap`. A block of another kind, such as `gantt` or `quadrantChart`, or one that doesn't parse, stays a code block, as Claude wrote it. Every kind is drawn both as a picture and in box drawing; `quadrantChart`, which the renderer draws as a picture but not yet well in box drawing, is left as code in both.
 
+![Nine small diagrams about an online shop, each on a white card: a flowchart, a sequence diagram, a state diagram, a class diagram, an ER diagram, a mind map, a bar chart, a pie chart and a timeline](docs/kinds.png)
+
+*Each kind in the `github-light` theme, with Segoe UI for labels. Open the picture to read the labels.*
+
 A diagram is drawn when its code block is closed and stands at the top level of the reply or in a list item. One in a list item is drawn at the item's indent. One inside a block quote stays code, and so does one still streaming in, until its closing fence arrives. A diagram wider than the terminal is shrunk to fit, and one taller than the screen is shrunk toward the screen's height, its labels no smaller than 60% of their size.
 
 Math in a label, written between `$` signs as in LaTeX (or `$$`, `\(…\)`, `\[…\]`), is drawn as the Unicode text [LaTeX Inline](https://github.com/dazebug/latex-inline) writes math as where it shows no pictures: `$x^2$` as x², `$\alpha \le \beta$` as α ≤ β, `$\frac{a+b}{c}$` as (a + b)/c. A `$` that doesn't open math, as in `$5`, stays as written, and so does a formula whose text would change the diagram, such as `|x|` in an edge label, where the bars would end the label.
